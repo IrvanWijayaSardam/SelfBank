@@ -33,6 +33,7 @@ func main() {
 
 	routes.RegisterRoutes(e, jwtService, authController)
 	routes.TransactionRoutes(e, transacionService, transactionController, jwtMiddleware)
+	routes.MidtransRoutes(e, transacionService, transactionController, jwtMiddleware)
 
 	e.Start(":8001")
 }

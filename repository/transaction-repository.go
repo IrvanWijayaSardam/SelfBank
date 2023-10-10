@@ -12,11 +12,12 @@ type TransactionRepository interface {
 	InsertTransaction(brg *entity.Transaction) entity.Transaction
 	All(page int, pageSize int) ([]entity.Transaction, error)
 	UpdateTransaction(plg entity.Transaction) entity.Transaction
-	FindTransactionByID(id string) *entity.Transaction
+	FindTransactionByID(id uint64) *entity.Transaction
 	FindTransactionByIDUser(id uint64, page int, pageSize int) ([]entity.Transaction, error)
 	TotalTransaction() int64
 	TotalTransactionByUserID(idUser uint64) int64
 	StorePaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error
+	UpdateTransactionStatus(id uint64, newStatus uint64) error
 }
 
 type TransactionConnection struct {
@@ -102,7 +103,7 @@ func (db *TransactionConnection) UpdateTransaction(Transaction entity.Transactio
 	return Transaction
 }
 
-func (db *TransactionConnection) FindTransactionByID(id string) *entity.Transaction {
+func (db *TransactionConnection) FindTransactionByID(id uint64) *entity.Transaction {
 	var Transaction entity.Transaction
 	result := db.connection.Where("id = ? ", id).Take(&Transaction)
 	if result.Error != nil || result.RowsAffected == 0 {
@@ -110,4 +111,21 @@ func (db *TransactionConnection) FindTransactionByID(id string) *entity.Transact
 	}
 
 	return &Transaction
+}
+
+func (db *TransactionConnection) UpdateTransactionStatus(id uint64, newStatus uint64) error {
+	var trx entity.Transaction
+	result := db.connection.First(&trx, id)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	trx.Status = newStatus
+
+	result = db.connection.Save(&trx)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }

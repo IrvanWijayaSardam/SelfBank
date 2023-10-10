@@ -25,3 +25,11 @@ func TransactionRoutes(e *echo.Echo, transactionService service.TransactionServi
 	authRoutes.GET("/:id", transactionController.FindTransactionByID)
 
 }
+
+func MidtransRoutes(e *echo.Echo, transactionService service.TransactionService,
+	transactionController controller.TransactionController, jwtMiddleware echo.MiddlewareFunc) {
+	authRoutes := e.Group("/api/midtrans/notification")
+
+	authRoutes.POST("/", transactionController.HandleMidtransNotification)
+
+}

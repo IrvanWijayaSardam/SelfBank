@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
@@ -21,11 +22,12 @@ type TransactionService interface {
 	InsertTransaction(Transaction dto.TransactionDTO) entity.Transaction
 	All(page int, pageSize int) ([]entity.Transaction, error)
 	FindTransactionByIDUser(idUiser uint64, int, pageSize int) ([]entity.Transaction, error)
-	FindTransactionByID(id string) *entity.Transaction
+	FindTransactionByID(id uint64) *entity.Transaction
 	SaveFile(file *multipart.FileHeader) (string, error)
 	TotalTransaction() int64
 	TotalTransactionByUserID(idUser uint64) int64
 	InsertPaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error
+	UpdateTransactionStatus(orderID uint64, newStatus uint64) error
 }
 
 type transactionService struct {
@@ -83,7 +85,7 @@ func (service *transactionService) FindTransactionByIDUser(idUser uint64, page i
 	return service.TransactionRepository.FindTransactionByIDUser(idUser, page, pageSize)
 }
 
-func (service *transactionService) FindTransactionByID(id string) *entity.Transaction {
+func (service *transactionService) FindTransactionByID(id uint64) *entity.Transaction {
 	return service.TransactionRepository.FindTransactionByID(id)
 }
 
@@ -119,4 +121,21 @@ func (service *transactionService) SaveFile(file *multipart.FileHeader) (string,
 	}
 
 	return fileName, nil
+}
+
+func (service *transactionService) UpdateTransactionStatus(orderID uint64, newStatus uint64) error {
+	// Fetch the MasterJual entity by order ID
+	masterJual := service.TransactionRepository.FindTransactionByID(orderID)
+	if masterJual.ID == 0 {
+		return fmt.Errorf("MasterJual not found for order ID %s", orderID)
+	}
+
+	masterJual.Status = newStatus
+
+	err := service.TransactionRepository.UpdateTransactionStatus(masterJual.ID, newStatus)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

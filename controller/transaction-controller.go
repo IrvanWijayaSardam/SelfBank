@@ -1,12 +1,15 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 
 	"github.com/IrvanWijayaSardam/SelfBank/dto"
@@ -22,6 +25,7 @@ type TransactionController interface {
 	Insert(context echo.Context) error
 	All(context echo.Context) error
 	FindTransactionByID(context echo.Context) error
+	HandleMidtransNotification(context echo.Context) error
 }
 
 type transactionController struct {
@@ -38,6 +42,13 @@ func NewTransactionController(transactionService service.TransactionService, jwt
 
 func (c *transactionController) Insert(context echo.Context) error {
 	authHeader := context.Request().Header.Get("Authorization")
+	errEnv := godotenv.Load()
+	if errEnv != nil {
+		panic("Failed to load env file")
+	}
+
+	MT_SERVER_KEY := os.Getenv("MT_SERVER_KEY")
+	MT_CLIENT_KEY := os.Getenv("MT_CLIENT_KEY")
 
 	token, err := c.jwtService.ValidateToken(authHeader)
 	if err != nil {
@@ -64,8 +75,8 @@ func (c *transactionController) Insert(context echo.Context) error {
 		Transaction := c.TransactionService.InsertTransaction(TransactionDTO)
 
 		// Initialize Midtrans client with your server key and environment
-		midtrans.ServerKey = "SB-Mid-server-OGvZnzcrnsKnOa9uT4MKoQZ0"
-		midtrans.ClientKey = "SB-Mid-client-H51GUkEKlO4_zPDI"
+		midtrans.ServerKey = MT_SERVER_KEY
+		midtrans.ClientKey = MT_CLIENT_KEY
 		midtrans.Environment = midtrans.Sandbox
 
 		// Create a map that maps IdPayment to the corresponding bank name
@@ -237,7 +248,135 @@ func (c *transactionController) All(context echo.Context) error {
 
 func (c *transactionController) FindTransactionByID(context echo.Context) error {
 	id := context.Param("id")
-	Transaction := c.TransactionService.FindTransactionByID(id)
+
+	orderIDUint, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		// Handle the error when parsing orderID
+		res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+		return context.JSON(http.StatusBadRequest, res)
+	}
+
+	Transaction := c.TransactionService.FindTransactionByID(orderIDUint)
 	response := helper.BuildResponse(true, "OK!", Transaction)
 	return context.JSON(http.StatusOK, response)
+}
+
+func (c *transactionController) HandleMidtransNotification(ctx echo.Context) error {
+	var notificationPayload map[string]interface{}
+
+	// 1. Parse JSON request body
+	if err := json.NewDecoder(ctx.Request().Body).Decode(&notificationPayload); err != nil {
+		// Handle the error when decoding the JSON payload
+		res := helper.BuildErrorResponse("Failed to parse notification", err.Error(), helper.EmptyObj{})
+		return ctx.JSON(http.StatusBadRequest, res)
+	}
+
+	// 2. Get order ID from the payload
+	orderID, exists := notificationPayload["order_id"].(string)
+	if !exists {
+		// Handle the case when the key `order_id` is not found
+		res := helper.BuildErrorResponse("Order ID not found in notification", "", helper.EmptyObj{})
+		return ctx.JSON(http.StatusBadRequest, res)
+	}
+
+	transactionStatusResp, midErr := coreapi.CheckTransaction(orderID)
+	if midErr != nil {
+		// Handle the error when checking transaction status using Midtrans error type
+		res := helper.BuildErrorResponse("Failed to check transaction status", midErr.Message, helper.EmptyObj{})
+		return ctx.JSON(http.StatusInternalServerError, res)
+	}
+
+	// 4. Update transaction status in your database based on the response
+	if transactionStatusResp != nil {
+		status := ""
+		switch transactionStatusResp.TransactionStatus {
+		case "capture":
+			if transactionStatusResp.FraudStatus == "challenge" {
+				// Set transaction status on your database to 'challenge'
+				status = "challenge"
+			} else if transactionStatusResp.FraudStatus == "accept" {
+				// Set transaction status on your database to 'success'
+				status = "success"
+			}
+		case "settlement":
+			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
+			if err != nil {
+				// Handle the error when parsing orderID
+				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+				return ctx.JSON(http.StatusBadRequest, res)
+			}
+
+			// Update the status of MasterJual to "2" in your database
+			err = c.TransactionService.UpdateTransactionStatus(orderIDUint, 5)
+			if err != nil {
+				// Handle the error when updating the status
+				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
+				return ctx.JSON(http.StatusInternalServerError, res)
+			}
+		case "deny":
+			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
+			if err != nil {
+				// Handle the error when parsing orderID
+				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+				return ctx.JSON(http.StatusBadRequest, res)
+			}
+
+			// Update the status of MasterJual to "2" in your database
+			err = c.TransactionService.UpdateTransactionStatus(orderIDUint, 4)
+			if err != nil {
+				// Handle the error when updating the status
+				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
+				return ctx.JSON(http.StatusInternalServerError, res)
+			}
+		case "cancel", "expire":
+			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
+			if err != nil {
+				// Handle the error when parsing orderID
+				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+				return ctx.JSON(http.StatusBadRequest, res)
+			}
+
+			// Update the status of MasterJual to "2" in your database
+			err = c.TransactionService.UpdateTransactionStatus(orderIDUint, 3)
+			if err != nil {
+				// Handle the error when updating the status
+				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
+				return ctx.JSON(http.StatusInternalServerError, res)
+			}
+		case "pending":
+			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
+			if err != nil {
+				// Handle the error when parsing orderID
+				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+				return ctx.JSON(http.StatusBadRequest, res)
+			}
+
+			// Update status transaski ke 4 , status pending
+			err = c.TransactionService.UpdateTransactionStatus(orderIDUint, 2)
+			if err != nil {
+				// Handle the error when updating the status
+				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
+				return ctx.JSON(http.StatusInternalServerError, res)
+			}
+		}
+
+		if status == "success" {
+			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
+			if err != nil {
+				// Handle the error when parsing orderID
+				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+				return ctx.JSON(http.StatusBadRequest, res)
+			}
+
+			// Update status transaski ke 5 , status sukses
+			err = c.TransactionService.UpdateTransactionStatus(orderIDUint, 5)
+			if err != nil {
+				// Handle the error when updating the status
+				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
+				return ctx.JSON(http.StatusInternalServerError, res)
+			}
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
