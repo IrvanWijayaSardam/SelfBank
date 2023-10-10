@@ -11,6 +11,7 @@ import (
 	"github.com/IrvanWijayaSardam/SelfBank/dto"
 	"github.com/IrvanWijayaSardam/SelfBank/entity"
 	"github.com/IrvanWijayaSardam/SelfBank/repository"
+	"github.com/midtrans/midtrans-go"
 
 	"github.com/google/uuid"
 	"github.com/mashingan/smapping"
@@ -24,6 +25,7 @@ type TransactionService interface {
 	SaveFile(file *multipart.FileHeader) (string, error)
 	TotalTransaction() int64
 	TotalTransactionByUserID(idUser uint64) int64
+	InsertPaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error
 }
 
 type transactionService struct {
@@ -44,6 +46,17 @@ func (service *transactionService) InsertTransaction(b dto.TransactionDTO) entit
 	}
 	res := service.TransactionRepository.InsertTransaction(&Transaction)
 	return res
+}
+
+func (service *transactionService) InsertPaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error {
+	err := service.TransactionRepository.StorePaymentToken(transactionID, paymentToken, virtualAcc)
+	if err != nil {
+		if midErr, ok := err.(*midtrans.Error); ok {
+			return errors.New(midErr.Message)
+		}
+		return err
+	}
+	return nil
 }
 
 func (service *transactionService) TotalTransaction() int64 {

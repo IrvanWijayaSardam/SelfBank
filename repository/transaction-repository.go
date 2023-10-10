@@ -16,6 +16,7 @@ type TransactionRepository interface {
 	FindTransactionByIDUser(id uint64, page int, pageSize int) ([]entity.Transaction, error)
 	TotalTransaction() int64
 	TotalTransactionByUserID(idUser uint64) int64
+	StorePaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error
 }
 
 type TransactionConnection struct {
@@ -49,6 +50,19 @@ func NewTransactionRepository(db *gorm.DB) TransactionRepository {
 func (db *TransactionConnection) InsertTransaction(Transaction *entity.Transaction) entity.Transaction {
 	db.connection.Save(Transaction)
 	return *Transaction
+}
+
+func (db *TransactionConnection) StorePaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error {
+	paymentTokenRecord := entity.PaymentToken{
+		TransactionID: transactionID,
+		PaymentToken:  paymentToken,
+		VirtualAcc:    virtualAcc,
+	}
+	result := db.connection.Create(&paymentTokenRecord)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
 func (db *TransactionConnection) All(page int, pageSize int) ([]entity.Transaction, error) {
