@@ -13,3 +13,15 @@ func RegisterRoutes(e *echo.Echo, jwtService service.JWTService, authController 
 	authRoutes.POST("/login", authController.Login)
 	authRoutes.POST("/register", authController.Register)
 }
+
+func TransactionRoutes(e *echo.Echo, transactionService service.TransactionService,
+	transactionController controller.TransactionController, jwtMiddleware echo.MiddlewareFunc) {
+	authRoutes := e.Group("/api/transaction")
+
+	authRoutes.Use(jwtMiddleware)
+
+	authRoutes.POST("/", transactionController.Insert)
+	authRoutes.GET("/", transactionController.All)
+	authRoutes.GET("/:id", transactionController.FindTransactionByID)
+
+}

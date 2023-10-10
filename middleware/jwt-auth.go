@@ -3,7 +3,6 @@ package middleware
 import (
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/IrvanWijayaSardam/SelfBank/service"
 
@@ -22,14 +21,7 @@ func AuthorizeJWT(jwtService service.JWTService) echo.MiddlewareFunc {
 				return c.JSON(http.StatusBadRequest, response)
 			}
 
-			const bearerPrefix = "Bearer "
-			if !strings.HasPrefix(authHeader, bearerPrefix) {
-				response := helper.BuildErrorResponse("Failed to process request", "Invalid Token Format", nil)
-				return c.JSON(http.StatusBadRequest, response)
-			}
-
-			tokenString := authHeader[len(bearerPrefix):]
-
+			tokenString := authHeader
 			token, err := jwtService.ValidateToken(tokenString)
 			if err != nil {
 				log.Println(err)
