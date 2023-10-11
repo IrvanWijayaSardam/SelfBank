@@ -20,7 +20,8 @@ func TransactionRoutes(e *echo.Echo, transactionService service.TransactionServi
 
 	authRoutes.Use(jwtMiddleware)
 
-	authRoutes.POST("/", transactionController.Insert)
+	authRoutes.POST("/deposit", transactionController.Insert)
+	authRoutes.POST("/withdrawal", transactionController.Withdrawal)
 	authRoutes.GET("/", transactionController.All)
 	authRoutes.GET("/:id", transactionController.FindTransactionByID)
 
@@ -28,7 +29,7 @@ func TransactionRoutes(e *echo.Echo, transactionService service.TransactionServi
 
 func MidtransRoutes(e *echo.Echo, transactionService service.TransactionService,
 	transactionController controller.TransactionController, jwtMiddleware echo.MiddlewareFunc) {
-	authRoutes := e.Group("/api/midtrans/notification")
+	authRoutes := e.Group("/api/midtrans/notifications")
 
 	authRoutes.POST("/", transactionController.HandleMidtransNotification)
 

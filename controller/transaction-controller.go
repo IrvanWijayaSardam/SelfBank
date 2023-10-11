@@ -26,6 +26,7 @@ type TransactionController interface {
 	All(context echo.Context) error
 	FindTransactionByID(context echo.Context) error
 	HandleMidtransNotification(context echo.Context) error
+	Withdrawal(context echo.Context) error
 }
 
 type transactionController struct {
@@ -244,6 +245,66 @@ func (c *transactionController) All(context echo.Context) error {
 	response := helper.BuildErrorResponse("Failed to process request", "Invalid token claims", helper.EmptyObj{})
 	return context.JSON(http.StatusBadRequest, response)
 
+}
+
+func (c *transactionController) Withdrawal(context echo.Context) error {
+	authHeader := context.Request().Header.Get("Authorization")
+	errEnv := godotenv.Load()
+	if errEnv != nil {
+		panic("Failed to load env file")
+	}
+
+	MT_SERVER_KEY := os.Getenv("MT_SERVER_KEY")
+	MT_CLIENT_KEY := os.Getenv("MT_CLIENT_KEY")
+
+	token, err := c.jwtService.ValidateToken(authHeader)
+	if err != nil {
+		log.Println(err)
+		response := helper.BuildErrorResponse("Token is not valid", err.Error(), nil)
+		return context.JSON(http.StatusUnauthorized, response)
+	}
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		context.Set("user", claims)
+
+		var RefundDTO dto.RefundDTO
+		if err := context.Bind(&RefundDTO); err != nil {
+			response := helper.BuildErrorResponse("Failed to process request", err.Error(), helper.EmptyObj{})
+			return context.JSON(http.StatusBadRequest, response)
+		}
+
+		// Initialize Midtrans client with your server key and environment
+		midtrans.ServerKey = MT_SERVER_KEY
+		midtrans.ClientKey = MT_CLIENT_KEY
+		midtrans.Environment = midtrans.Sandbox
+
+		refundReq := &coreapi.RefundReq{
+			RefundKey: "withdrawal123333",
+			Amount:    int64(RefundDTO.Amount),
+			Reason:    RefundDTO.Reason,
+		}
+
+		orderIDStr := strconv.FormatUint(RefundDTO.OrderID, 10) // Convert the uint64 to a string
+
+		refundResp, err := coreapi.DirectRefundTransaction(orderIDStr, refundReq)
+		if err != nil {
+			// Handle the error when refunding the transaction
+			res := helper.BuildErrorResponse("Failed to refund transaction", err.Error(), helper.EmptyObj{})
+			context.JSON(http.StatusInternalServerError, res)
+			return err
+		}
+
+		// Assuming you have a "response" map to store the response data
+		response := make(map[string]interface{})
+		response["refund_status"] = refundResp.StatusMessage
+		response["refund_id"] = refundResp.ID
+
+		// Respond with success message and the response data
+		res := helper.BuildResponse(true, "Refund processed successfully!", response)
+		return context.JSON(http.StatusOK, res)
+	}
+
+	response := helper.BuildErrorResponse("Failed to process request", "Invalid JWT token", helper.EmptyObj{})
+	return context.JSON(http.StatusUnauthorized, response)
 }
 
 func (c *transactionController) FindTransactionByID(context echo.Context) error {
