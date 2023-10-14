@@ -7,6 +7,9 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+
+	"math/rand"
+	"time"
 )
 
 type UserRepository interface {
@@ -35,8 +38,17 @@ func (db *userConnection) All() []entity.User {
 	return users
 }
 
+// Function to generate a random 7-digit account number
+func generateRandomAccountNumber() uint64 {
+	rand.Seed(time.Now().UnixNano())
+	min := 1000000 // 7-digit minimum number
+	max := 9999999 // 7-digit maximum number
+	return uint64(min + rand.Intn(max-min+1))
+}
+
 func (db *userConnection) InsertUser(user entity.User) entity.User {
 	user.Password = hashAndSalt([]byte(user.Password))
+	user.AccountNumber = generateRandomAccountNumber()
 	db.connection.Save(&user)
 	return user
 }
