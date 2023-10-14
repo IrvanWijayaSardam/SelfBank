@@ -21,23 +21,23 @@ import (
 	"github.com/midtrans/midtrans-go/coreapi"
 )
 
-type TransactionController interface {
+type DepositController interface {
 	Insert(context echo.Context) error
 	All(context echo.Context) error
-	FindTransactionByID(context echo.Context) error
+	FindDepositByID(context echo.Context) error
 	HandleMidtransNotification(context echo.Context) error
-	Withdrawal(context echo.Context) error
+	Refund(context echo.Context) error
 }
 
 type transactionController struct {
-	TransactionService service.TransactionService
-	jwtService         service.JWTService
+	DepositService service.DepositService
+	jwtService     service.JWTService
 }
 
-func NewTransactionController(transactionService service.TransactionService, jwtService service.JWTService) TransactionController {
+func NewDepositController(transactionService service.DepositService, jwtService service.JWTService) DepositController {
 	return &transactionController{
-		TransactionService: transactionService,
-		jwtService:         jwtService,
+		DepositService: transactionService,
+		jwtService:     jwtService,
 	}
 }
 
@@ -66,14 +66,14 @@ func (c *transactionController) Insert(context echo.Context) error {
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
-		var TransactionDTO dto.TransactionDTO
-		if err := context.Bind(&TransactionDTO); err != nil {
+		var DepositDTO dto.DepositDTO
+		if err := context.Bind(&DepositDTO); err != nil {
 			response := helper.BuildErrorResponse("Failed to process request", err.Error(), helper.EmptyObj{})
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
-		TransactionDTO.ID_User, _ = strconv.ParseUint(userID, 10, 64)
-		Transaction := c.TransactionService.InsertTransaction(TransactionDTO)
+		DepositDTO.ID_User, _ = strconv.ParseUint(userID, 10, 64)
+		Deposit := c.DepositService.InsertDeposit(DepositDTO)
 
 		// Initialize Midtrans client with your server key and environment
 		midtrans.ServerKey = MT_SERVER_KEY
@@ -88,7 +88,7 @@ func (c *transactionController) Insert(context echo.Context) error {
 			// Add more mappings as needed
 		}
 
-		if bank, ok := bankMap[TransactionDTO.PaymentType]; ok {
+		if bank, ok := bankMap[DepositDTO.PaymentType]; ok {
 			var midtransBank midtrans.Bank
 
 			switch bank {
@@ -106,8 +106,8 @@ func (c *transactionController) Insert(context echo.Context) error {
 				PaymentType:  "bank_transfer",
 				BankTransfer: &coreapi.BankTransferDetails{Bank: midtransBank},
 				TransactionDetails: midtrans.TransactionDetails{
-					OrderID:  strconv.FormatUint(Transaction.ID, 10),
-					GrossAmt: int64(Transaction.Ammount),
+					OrderID:  strconv.FormatUint(Deposit.ID, 10),
+					GrossAmt: int64(Deposit.Ammount),
 				},
 			}
 
@@ -129,10 +129,10 @@ func (c *transactionController) Insert(context echo.Context) error {
 			// Assuming you have a "response" map to store the response data
 			response := make(map[string]interface{})
 			response["va_account"] = vaAccount
-			c.TransactionService.InsertPaymentToken(Transaction.ID, chargeResp.OrderID, vaAccount)
+			c.DepositService.InsertPaymentToken(Deposit.ID, chargeResp.OrderID, vaAccount)
 
 			// Respond with success message and the response data
-			res := helper.BuildResponse(true, "Transaction inserted successfully!", response)
+			res := helper.BuildResponse(true, "Deposit inserted successfully!", response)
 			return context.JSON(http.StatusCreated, res)
 		} else {
 			// Handle unsupported IdPayment values
@@ -185,13 +185,13 @@ func (c *transactionController) All(context echo.Context) error {
 		}
 		switch roleID {
 		case 1:
-			Transactions, err := c.TransactionService.All(page, pageSize)
+			Deposits, err := c.DepositService.All(page, pageSize)
 			if err != nil {
 				response := helper.BuildErrorResponse("Failed to fetch data", err.Error(), helper.EmptyObj{})
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
-			total := c.TransactionService.TotalTransaction()
+			total := c.DepositService.TotalDeposit()
 
 			totalPages := (int(total) + pageSize - 1) / pageSize
 
@@ -199,13 +199,13 @@ func (c *transactionController) All(context echo.Context) error {
 				Status  bool                      `json:"status"`
 				Message string                    `json:"message"`
 				Errors  interface{}               `json:"errors"`
-				Data    []entity.Transaction      `json:"data"`
+				Data    []entity.Deposit          `json:"data"`
 				Paging  helper.PaginationResponse `json:"paging"`
 			}{
 				Status:  true,
 				Message: "OK!",
 				Errors:  nil,
-				Data:    Transactions,
+				Data:    Deposits,
 				Paging:  helper.PaginationResponse{TotalRecords: int(total), CurrentPage: page, TotalPages: totalPages},
 			}
 
@@ -215,13 +215,13 @@ func (c *transactionController) All(context echo.Context) error {
 			if err != nil {
 				fmt.Println("Conversion error:", err)
 			}
-			Transactions, err := c.TransactionService.FindTransactionByIDUser(userIDCnv, page, pageSize)
+			Deposits, err := c.DepositService.FindDepositByIDUser(userIDCnv, page, pageSize)
 			if err != nil {
 				response := helper.BuildErrorResponse("Failed to fetch data", err.Error(), helper.EmptyObj{})
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
-			total := c.TransactionService.TotalTransactionByUserID(userIDCnv)
+			total := c.DepositService.TotalDepositByUserID(userIDCnv)
 
 			totalPages := (int(total) + pageSize - 1) / pageSize
 
@@ -229,13 +229,13 @@ func (c *transactionController) All(context echo.Context) error {
 				Status  bool                      `json:"status"`
 				Message string                    `json:"message"`
 				Errors  interface{}               `json:"errors"`
-				Data    []entity.Transaction      `json:"data"`
+				Data    []entity.Deposit          `json:"data"`
 				Paging  helper.PaginationResponse `json:"paging"`
 			}{
 				Status:  true,
 				Message: "OK!",
 				Errors:  nil,
-				Data:    Transactions,
+				Data:    Deposits,
 				Paging:  helper.PaginationResponse{TotalRecords: int(total), CurrentPage: page, TotalPages: totalPages},
 			}
 
@@ -247,7 +247,7 @@ func (c *transactionController) All(context echo.Context) error {
 
 }
 
-func (c *transactionController) Withdrawal(context echo.Context) error {
+func (c *transactionController) Refund(context echo.Context) error {
 	authHeader := context.Request().Header.Get("Authorization")
 	errEnv := godotenv.Load()
 	if errEnv != nil {
@@ -278,7 +278,7 @@ func (c *transactionController) Withdrawal(context echo.Context) error {
 		midtrans.Environment = midtrans.Sandbox
 
 		refundReq := &coreapi.RefundReq{
-			RefundKey: "withdrawal123333",
+			RefundKey: "withdrawal22938928",
 			Amount:    int64(RefundDTO.Amount),
 			Reason:    RefundDTO.Reason,
 		}
@@ -307,7 +307,7 @@ func (c *transactionController) Withdrawal(context echo.Context) error {
 	return context.JSON(http.StatusUnauthorized, response)
 }
 
-func (c *transactionController) FindTransactionByID(context echo.Context) error {
+func (c *transactionController) FindDepositByID(context echo.Context) error {
 	id := context.Param("id")
 
 	orderIDUint, err := strconv.ParseUint(id, 10, 64)
@@ -317,8 +317,8 @@ func (c *transactionController) FindTransactionByID(context echo.Context) error 
 		return context.JSON(http.StatusBadRequest, res)
 	}
 
-	Transaction := c.TransactionService.FindTransactionByID(orderIDUint)
-	response := helper.BuildResponse(true, "OK!", Transaction)
+	Deposit := c.DepositService.FindDepositByID(orderIDUint)
+	response := helper.BuildResponse(true, "OK!", Deposit)
 	return context.JSON(http.StatusOK, response)
 }
 
@@ -368,7 +368,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			}
 
 			// Update the status of MasterJual to "2" in your database
-			err = c.TransactionService.UpdateTransactionStatus(orderIDUint, 5)
+			err = c.DepositService.UpdateDepositStatus(orderIDUint, 5)
 			if err != nil {
 				// Handle the error when updating the status
 				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
@@ -383,7 +383,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			}
 
 			// Update the status of MasterJual to "2" in your database
-			err = c.TransactionService.UpdateTransactionStatus(orderIDUint, 4)
+			err = c.DepositService.UpdateDepositStatus(orderIDUint, 4)
 			if err != nil {
 				// Handle the error when updating the status
 				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
@@ -398,7 +398,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			}
 
 			// Update the status of MasterJual to "2" in your database
-			err = c.TransactionService.UpdateTransactionStatus(orderIDUint, 3)
+			err = c.DepositService.UpdateDepositStatus(orderIDUint, 3)
 			if err != nil {
 				// Handle the error when updating the status
 				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
@@ -413,7 +413,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			}
 
 			// Update status transaski ke 4 , status pending
-			err = c.TransactionService.UpdateTransactionStatus(orderIDUint, 2)
+			err = c.DepositService.UpdateDepositStatus(orderIDUint, 2)
 			if err != nil {
 				// Handle the error when updating the status
 				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
@@ -430,7 +430,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			}
 
 			// Update status transaski ke 5 , status sukses
-			err = c.TransactionService.UpdateTransactionStatus(orderIDUint, 5)
+			err = c.DepositService.UpdateDepositStatus(orderIDUint, 5)
 			if err != nil {
 				// Handle the error when updating the status
 				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})

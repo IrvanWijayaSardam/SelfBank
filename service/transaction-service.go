@@ -18,40 +18,40 @@ import (
 	"github.com/mashingan/smapping"
 )
 
-type TransactionService interface {
-	InsertTransaction(Transaction dto.TransactionDTO) entity.Transaction
-	All(page int, pageSize int) ([]entity.Transaction, error)
-	FindTransactionByIDUser(idUiser uint64, int, pageSize int) ([]entity.Transaction, error)
-	FindTransactionByID(id uint64) *entity.Transaction
+type DepositService interface {
+	InsertDeposit(Deposit dto.DepositDTO) entity.Deposit
+	All(page int, pageSize int) ([]entity.Deposit, error)
+	FindDepositByIDUser(idUiser uint64, int, pageSize int) ([]entity.Deposit, error)
+	FindDepositByID(id uint64) *entity.Deposit
 	SaveFile(file *multipart.FileHeader) (string, error)
-	TotalTransaction() int64
-	TotalTransactionByUserID(idUser uint64) int64
+	TotalDeposit() int64
+	TotalDepositByUserID(idUser uint64) int64
 	InsertPaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error
-	UpdateTransactionStatus(orderID uint64, newStatus uint64) error
+	UpdateDepositStatus(orderID uint64, newStatus uint64) error
 }
 
 type transactionService struct {
-	TransactionRepository repository.TransactionRepository
+	DepositRepository repository.DepositRepository
 }
 
-func NewTransactionService(fundRep repository.TransactionRepository) TransactionService {
+func NewDepositService(fundRep repository.DepositRepository) DepositService {
 	return &transactionService{
-		TransactionRepository: fundRep,
+		DepositRepository: fundRep,
 	}
 }
 
-func (service *transactionService) InsertTransaction(b dto.TransactionDTO) entity.Transaction {
-	Transaction := entity.Transaction{}
-	err := smapping.FillStruct(&Transaction, smapping.MapFields(&b))
+func (service *transactionService) InsertDeposit(b dto.DepositDTO) entity.Deposit {
+	Deposit := entity.Deposit{}
+	err := smapping.FillStruct(&Deposit, smapping.MapFields(&b))
 	if err != nil {
 		log.Fatalf("Failed map %v", err)
 	}
-	res := service.TransactionRepository.InsertTransaction(&Transaction)
+	res := service.DepositRepository.InsertDeposit(&Deposit)
 	return res
 }
 
 func (service *transactionService) InsertPaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error {
-	err := service.TransactionRepository.StorePaymentToken(transactionID, paymentToken, virtualAcc)
+	err := service.DepositRepository.StorePaymentToken(transactionID, paymentToken, virtualAcc)
 	if err != nil {
 		if midErr, ok := err.(*midtrans.Error); ok {
 			return errors.New(midErr.Message)
@@ -61,32 +61,32 @@ func (service *transactionService) InsertPaymentToken(transactionID uint64, paym
 	return nil
 }
 
-func (service *transactionService) TotalTransaction() int64 {
-	return service.TransactionRepository.TotalTransaction()
+func (service *transactionService) TotalDeposit() int64 {
+	return service.DepositRepository.TotalDeposit()
 }
 
-func (service *transactionService) TotalTransactionByUserID(idUser uint64) int64 {
-	return service.TransactionRepository.TotalTransactionByUserID(idUser)
+func (service *transactionService) TotalDepositByUserID(idUser uint64) int64 {
+	return service.DepositRepository.TotalDepositByUserID(idUser)
 }
 
-func (service *transactionService) All(page int, pageSize int) ([]entity.Transaction, error) {
+func (service *transactionService) All(page int, pageSize int) ([]entity.Deposit, error) {
 	if page <= 0 || pageSize <= 0 {
 		return nil, errors.New("Invalid page or pageSize values")
 	}
 
-	return service.TransactionRepository.All(page, pageSize)
+	return service.DepositRepository.All(page, pageSize)
 }
 
-func (service *transactionService) FindTransactionByIDUser(idUser uint64, page int, pageSize int) ([]entity.Transaction, error) {
+func (service *transactionService) FindDepositByIDUser(idUser uint64, page int, pageSize int) ([]entity.Deposit, error) {
 	if page <= 0 || pageSize <= 0 {
 		return nil, errors.New("Invalid page or pageSize values")
 	}
 
-	return service.TransactionRepository.FindTransactionByIDUser(idUser, page, pageSize)
+	return service.DepositRepository.FindDepositByIDUser(idUser, page, pageSize)
 }
 
-func (service *transactionService) FindTransactionByID(id uint64) *entity.Transaction {
-	return service.TransactionRepository.FindTransactionByID(id)
+func (service *transactionService) FindDepositByID(id uint64) *entity.Deposit {
+	return service.DepositRepository.FindDepositByID(id)
 }
 
 func (service *transactionService) SaveFile(file *multipart.FileHeader) (string, error) {
@@ -123,16 +123,16 @@ func (service *transactionService) SaveFile(file *multipart.FileHeader) (string,
 	return fileName, nil
 }
 
-func (service *transactionService) UpdateTransactionStatus(orderID uint64, newStatus uint64) error {
+func (service *transactionService) UpdateDepositStatus(orderID uint64, newStatus uint64) error {
 	// Fetch the MasterJual entity by order ID
-	masterJual := service.TransactionRepository.FindTransactionByID(orderID)
+	masterJual := service.DepositRepository.FindDepositByID(orderID)
 	if masterJual.ID == 0 {
 		return fmt.Errorf("MasterJual not found for order ID %s", orderID)
 	}
 
 	masterJual.Status = newStatus
 
-	err := service.TransactionRepository.UpdateTransactionStatus(masterJual.ID, newStatus)
+	err := service.DepositRepository.UpdateDepositStatus(masterJual.ID, newStatus)
 	if err != nil {
 		return err
 	}

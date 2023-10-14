@@ -14,21 +14,31 @@ func RegisterRoutes(e *echo.Echo, jwtService service.JWTService, authController 
 	authRoutes.POST("/register", authController.Register)
 }
 
-func TransactionRoutes(e *echo.Echo, transactionService service.TransactionService,
-	transactionController controller.TransactionController, jwtMiddleware echo.MiddlewareFunc) {
-	authRoutes := e.Group("/api/transaction")
+func DepositRoutes(e *echo.Echo, depositService service.DepositService,
+	depositController controller.DepositController, jwtMiddleware echo.MiddlewareFunc) {
+	authRoutes := e.Group("/api/deposit")
 
 	authRoutes.Use(jwtMiddleware)
-
-	authRoutes.POST("/deposit", transactionController.Insert)
-	authRoutes.POST("/withdrawal", transactionController.Withdrawal)
-	authRoutes.GET("/", transactionController.All)
-	authRoutes.GET("/:id", transactionController.FindTransactionByID)
+	authRoutes.POST("/", depositController.Insert)
+	authRoutes.GET("/", depositController.All)
+	authRoutes.GET("/:id", depositController.FindDepositByID)
 
 }
 
-func MidtransRoutes(e *echo.Echo, transactionService service.TransactionService,
-	transactionController controller.TransactionController, jwtMiddleware echo.MiddlewareFunc) {
+func WithdrawalRoutes(e *echo.Echo, withdrawalService service.WithdrawalService,
+	withdrawalController controller.WithdrawalController, jwtMiddleware echo.MiddlewareFunc) {
+	authRoutes := e.Group("/api/withdrawal")
+
+	authRoutes.Use(jwtMiddleware)
+
+	authRoutes.POST("/", withdrawalController.Insert)
+	authRoutes.GET("/", withdrawalController.All)
+	authRoutes.GET("/:id", withdrawalController.FindWithdrawalByID)
+
+}
+
+func MidtransRoutes(e *echo.Echo, transactionService service.DepositService,
+	transactionController controller.DepositController, jwtMiddleware echo.MiddlewareFunc) {
 	authRoutes := e.Group("/api/midtrans/notifications")
 
 	authRoutes.POST("/", transactionController.HandleMidtransNotification)
