@@ -113,6 +113,7 @@ func (c *transactionController) Insert(context echo.Context) error {
 
 			chargeResp, err := coreapi.ChargeTransaction(chargeReq)
 			if err != nil {
+				c.DepositService.UpdateDepositStatus(Deposit.ID, 3)
 				res := helper.BuildErrorResponse("Failed to charge transaction", err.Error(), helper.EmptyObj{})
 				context.JSON(http.StatusInternalServerError, res)
 				return err

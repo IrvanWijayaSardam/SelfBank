@@ -25,7 +25,7 @@ type WithdrawalConnection struct {
 
 func (db *WithdrawalConnection) TotalWithdrawal() int64 {
 	var count int64
-	result := db.connection.Model(&entity.Withdrawal{}).Where("status = ?", 5).Count(&count)
+	result := db.connection.Model(&entity.Withdrawal{}).Where("status = ?", 1).Count(&count)
 	if result.Error != nil {
 		return 0
 	}
@@ -34,7 +34,7 @@ func (db *WithdrawalConnection) TotalWithdrawal() int64 {
 
 func (db *WithdrawalConnection) TotalWithdrawalByUserID(idUser uint64) int64 {
 	var count int64
-	result := db.connection.Model(&entity.Withdrawal{}).Where("id_user = ? && status = ?", idUser, 5).Count(&count)
+	result := db.connection.Model(&entity.Withdrawal{}).Where("id_user = ? && status = ?", idUser, 1).Count(&count)
 	if result.Error != nil {
 		return 0
 	}
@@ -76,7 +76,7 @@ func (db *WithdrawalConnection) FindWithdrawalByIDUser(idUser uint64, page int, 
 	var transactions []entity.Withdrawal
 	offset := (page - 1) * pageSize
 
-	result := db.connection.Where("id_user = ? && status = ?", idUser, 5).Offset(offset).Limit(pageSize).Find(&transactions)
+	result := db.connection.Where("id_user = ? && status = ?", idUser, 1).Offset(offset).Limit(pageSize).Find(&transactions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
