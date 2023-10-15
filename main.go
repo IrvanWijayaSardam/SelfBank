@@ -23,6 +23,7 @@ var (
 	jwtService        service.JWTService        = service.NewJWTService()
 	depositService    service.DepositService    = service.NewDepositService(depositRepository)
 	withdrawalService service.WithdrawalService = service.NewWithdrawalService(withdrawalRepository)
+	userService       service.UserService       = service.NewUserService(userRepository)
 )
 
 func main() {
@@ -33,11 +34,13 @@ func main() {
 	authController := controller.NewAuthController(authService, jwtService)
 	depositController := controller.NewDepositController(depositService, jwtService)
 	withdrawalController := controller.NewWithdrawalController(withdrawalService, jwtService)
+	userController := controller.NewUserController(userService, jwtService)
 
 	routes.RegisterRoutes(e, jwtService, authController)
 	routes.DepositRoutes(e, depositService, depositController, jwtMiddleware)
 	routes.MidtransRoutes(e, depositService, depositController, jwtMiddleware)
 	routes.WithdrawalRoutes(e, withdrawalService, withdrawalController, jwtMiddleware)
+	routes.UserRoutes(e, userService, userController, jwtMiddleware)
 
 	e.Start(":8001")
 }

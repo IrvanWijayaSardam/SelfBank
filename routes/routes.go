@@ -37,6 +37,14 @@ func WithdrawalRoutes(e *echo.Echo, withdrawalService service.WithdrawalService,
 
 }
 
+func UserRoutes(e *echo.Echo, userService service.UserService,
+	userController controller.UserController, jwtMiddleware echo.MiddlewareFunc) {
+	authRoutes := e.Group("/api/user")
+
+	authRoutes.GET("/", userController.MyProfile)
+
+}
+
 func MidtransRoutes(e *echo.Echo, transactionService service.DepositService,
 	transactionController controller.DepositController, jwtMiddleware echo.MiddlewareFunc) {
 	authRoutes := e.Group("/api/midtrans/notifications")

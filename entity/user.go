@@ -11,6 +11,7 @@ type User struct {
 	Jk            string `gorm:"type:varchar(255)" json:"jk"`
 	Profile       string `gorm:"type:varchar(255)" json:"profile"`
 	Token         string `gorm:"-" json:"token,omitempty"`
+	Balance       string `gorm:"-" json:"balance,omitempty"`
 	AccountNumber uint64 `gorm:"type:varchar(255)" json:"acc_number"`
 	IdRole        uint64 `gorm:"type:bigint" json:"idrole"`
 	Status        uint64 `gorm:"type:int(100)" json:"status"`

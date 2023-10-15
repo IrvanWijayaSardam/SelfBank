@@ -19,7 +19,9 @@ type UserRepository interface {
 	VerifyCredential(email string, password string) interface{}
 	IsDuplicateEmail(email string) (tx *gorm.DB)
 	FindByEmail(email string) entity.User
-	ProfileUser(userId string) entity.User
+	ProfileUser(userId uint64) entity.User
+	TotalDepositByUserID(userId uint64) int64
+	TotalWithdrawalByUserID(userid uint64) int64
 }
 
 type userConnection struct {
@@ -86,10 +88,28 @@ func (db *userConnection) FindByEmail(email string) entity.User {
 	return user
 }
 
-func (db *userConnection) ProfileUser(userID string) entity.User {
+func (db *userConnection) ProfileUser(userID uint64) entity.User {
 	var user entity.User
 	db.connection.Find(&user, userID)
 	return user
+}
+
+func (db *userConnection) TotalDepositByUserID(idUser uint64) int64 {
+	var totalAmount int64
+	result := db.connection.Model(&entity.Deposit{}).Select("SUM(amount)").Where("id_user = ? && status = ?", idUser, 5).Scan(&totalAmount)
+	if result.Error != nil {
+		return 0
+	}
+	return totalAmount
+}
+
+func (db *userConnection) TotalWithdrawalByUserID(idUser uint64) int64 {
+	var totalAmount int64
+	result := db.connection.Model(&entity.Withdrawal{}).Select("SUM(amount)").Where("id_user = ? && status = ?", idUser, 1).Scan(&totalAmount)
+	if result.Error != nil {
+		return 0
+	}
+	return totalAmount
 }
 
 func hashAndSalt(pwd []byte) string {

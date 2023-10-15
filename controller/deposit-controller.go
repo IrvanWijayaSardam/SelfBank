@@ -107,7 +107,7 @@ func (c *transactionController) Insert(context echo.Context) error {
 				BankTransfer: &coreapi.BankTransferDetails{Bank: midtransBank},
 				TransactionDetails: midtrans.TransactionDetails{
 					OrderID:  strconv.FormatUint(Deposit.ID, 10),
-					GrossAmt: int64(Deposit.Ammount),
+					GrossAmt: int64(Deposit.Amount),
 				},
 			}
 

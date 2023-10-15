@@ -26,7 +26,7 @@ type DepositConnection struct {
 
 func (db *DepositConnection) TotalDeposit() int64 {
 	var count int64
-	result := db.connection.Model(&entity.Deposit{}).Where("status = ?", 1).Count(&count)
+	result := db.connection.Model(&entity.Deposit{}).Where("status = ?", 5).Count(&count)
 	if result.Error != nil {
 		return 0
 	}
@@ -35,7 +35,7 @@ func (db *DepositConnection) TotalDeposit() int64 {
 
 func (db *DepositConnection) TotalDepositByUserID(idUser uint64) int64 {
 	var count int64
-	result := db.connection.Model(&entity.Deposit{}).Where("id_user = ? && status = ?", idUser, 1).Count(&count)
+	result := db.connection.Model(&entity.Deposit{}).Where("id_user = ? && status = ?", idUser, 5).Count(&count)
 	if result.Error != nil {
 		return 0
 	}
@@ -74,7 +74,7 @@ func (db *DepositConnection) All(page int, pageSize int) ([]entity.Deposit, erro
 	var transactions []entity.Deposit
 	offset := (page - 1) * pageSize
 
-	result := db.connection.Where("status = ?", 1).Offset(offset).Limit(pageSize).Find(&transactions)
+	result := db.connection.Where("status = ?", 5).Offset(offset).Limit(pageSize).Find(&transactions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -90,7 +90,7 @@ func (db *DepositConnection) FindDepositByIDUser(idUser uint64, page int, pageSi
 	var transactions []entity.Deposit
 	offset := (page - 1) * pageSize
 
-	result := db.connection.Where("id_user = ? && status = ?", idUser, 1).Offset(offset).Limit(pageSize).Find(&transactions)
+	result := db.connection.Where("id_user = ? && status = ?", idUser, 5).Offset(offset).Limit(pageSize).Find(&transactions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
