@@ -54,7 +54,7 @@ func (c *transactionController) Insert(context echo.Context) error {
 	token, err := c.jwtService.ValidateToken(authHeader)
 	if err != nil {
 		log.Println(err)
-		response := helper.BuildErrorResponse("Token is not valid", err.Error(), nil)
+		response := helper.BuildErrorResponse("Token is not valid", err.Error())
 		return context.JSON(http.StatusUnauthorized, response)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -62,13 +62,13 @@ func (c *transactionController) Insert(context echo.Context) error {
 
 		userID, ok := claims["userid"].(string)
 		if !ok {
-			response := helper.BuildErrorResponse("Failed to process request", "UserID not found in claims", helper.EmptyObj{})
+			response := helper.BuildErrorResponse("Failed to process request", "UserID not found in claims")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
 		var DepositDTO dto.DepositDTO
 		if err := context.Bind(&DepositDTO); err != nil {
-			response := helper.BuildErrorResponse("Failed to process request", err.Error(), helper.EmptyObj{})
+			response := helper.BuildErrorResponse("Failed to process request", err.Error())
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
@@ -114,7 +114,7 @@ func (c *transactionController) Insert(context echo.Context) error {
 			chargeResp, err := coreapi.ChargeTransaction(chargeReq)
 			if err != nil {
 				c.DepositService.UpdateDepositStatus(Deposit.ID, 3)
-				res := helper.BuildErrorResponse("Failed to charge transaction", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to charge transaction", err.Error())
 				context.JSON(http.StatusInternalServerError, res)
 				return err
 			}
@@ -136,13 +136,12 @@ func (c *transactionController) Insert(context echo.Context) error {
 			res := helper.BuildResponse(true, "Deposit inserted successfully!", response)
 			return context.JSON(http.StatusCreated, res)
 		} else {
-			// Handle unsupported IdPayment values
-			res := helper.BuildErrorResponse("Unsupported payment type", "Unsupported payment type", helper.EmptyObj{})
+			res := helper.BuildErrorResponse("Unsupported payment type", nil)
 			return context.JSON(http.StatusBadRequest, res)
 		}
 	}
 
-	response := helper.BuildErrorResponse("Failed to process request", "Invalid JWT token", helper.EmptyObj{})
+	response := helper.BuildErrorResponse("Failed to process request", "Invalid JWT token")
 	return context.JSON(http.StatusUnauthorized, response)
 }
 
@@ -167,7 +166,7 @@ func (c *transactionController) All(context echo.Context) error {
 	token, err := c.jwtService.ValidateToken(authHeader)
 	if err != nil {
 		log.Println(err)
-		response := helper.BuildErrorResponse("Token is not valid", err.Error(), nil)
+		response := helper.BuildErrorResponse("Token is not valid", err.Error())
 		return context.JSON(http.StatusUnauthorized, response)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -175,20 +174,20 @@ func (c *transactionController) All(context echo.Context) error {
 
 		userID, ok := claims["userid"].(string)
 		if !ok {
-			response := helper.BuildErrorResponse("Failed to process request", "UserID not found in claims", helper.EmptyObj{})
+			response := helper.BuildErrorResponse("Failed to process request", "UserID not found in claims")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
 		roleID, ok := claims["idrole"].(float64)
 		if !ok {
-			response := helper.BuildErrorResponse("Failed to process request", "IDRole not found in claims", helper.EmptyObj{})
+			response := helper.BuildErrorResponse("Failed to process request", "IDRole not found in claims")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 		switch roleID {
 		case 1:
 			Deposits, err := c.DepositService.All(page, pageSize)
 			if err != nil {
-				response := helper.BuildErrorResponse("Failed to fetch data", err.Error(), helper.EmptyObj{})
+				response := helper.BuildErrorResponse("Failed to fetch data", err.Error())
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
@@ -218,7 +217,7 @@ func (c *transactionController) All(context echo.Context) error {
 			}
 			Deposits, err := c.DepositService.FindDepositByIDUser(userIDCnv, page, pageSize)
 			if err != nil {
-				response := helper.BuildErrorResponse("Failed to fetch data", err.Error(), helper.EmptyObj{})
+				response := helper.BuildErrorResponse("Failed to fetch data", err.Error())
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
@@ -243,7 +242,7 @@ func (c *transactionController) All(context echo.Context) error {
 			return context.JSON(http.StatusOK, customResponse)
 		}
 	}
-	response := helper.BuildErrorResponse("Failed to process request", "Invalid token claims", helper.EmptyObj{})
+	response := helper.BuildErrorResponse("Failed to process request", "Invalid token claims")
 	return context.JSON(http.StatusBadRequest, response)
 
 }
@@ -261,7 +260,7 @@ func (c *transactionController) Refund(context echo.Context) error {
 	token, err := c.jwtService.ValidateToken(authHeader)
 	if err != nil {
 		log.Println(err)
-		response := helper.BuildErrorResponse("Token is not valid", err.Error(), nil)
+		response := helper.BuildErrorResponse("Token is not valid", err.Error())
 		return context.JSON(http.StatusUnauthorized, response)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -269,7 +268,7 @@ func (c *transactionController) Refund(context echo.Context) error {
 
 		var RefundDTO dto.RefundDTO
 		if err := context.Bind(&RefundDTO); err != nil {
-			response := helper.BuildErrorResponse("Failed to process request", err.Error(), helper.EmptyObj{})
+			response := helper.BuildErrorResponse("Failed to process request", err.Error())
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
@@ -289,7 +288,7 @@ func (c *transactionController) Refund(context echo.Context) error {
 		refundResp, err := coreapi.DirectRefundTransaction(orderIDStr, refundReq)
 		if err != nil {
 			// Handle the error when refunding the transaction
-			res := helper.BuildErrorResponse("Failed to refund transaction", err.Error(), helper.EmptyObj{})
+			res := helper.BuildErrorResponse("Failed to refund transaction", err.Error())
 			context.JSON(http.StatusInternalServerError, res)
 			return err
 		}
@@ -304,7 +303,7 @@ func (c *transactionController) Refund(context echo.Context) error {
 		return context.JSON(http.StatusOK, res)
 	}
 
-	response := helper.BuildErrorResponse("Failed to process request", "Invalid JWT token", helper.EmptyObj{})
+	response := helper.BuildErrorResponse("Failed to process request", "Invalid JWT token")
 	return context.JSON(http.StatusUnauthorized, response)
 }
 
@@ -314,7 +313,7 @@ func (c *transactionController) FindDepositByID(context echo.Context) error {
 	orderIDUint, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		// Handle the error when parsing orderID
-		res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+		res := helper.BuildErrorResponse("Failed to parse order ID", err.Error())
 		return context.JSON(http.StatusBadRequest, res)
 	}
 
@@ -329,7 +328,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 	// 1. Parse JSON request body
 	if err := json.NewDecoder(ctx.Request().Body).Decode(&notificationPayload); err != nil {
 		// Handle the error when decoding the JSON payload
-		res := helper.BuildErrorResponse("Failed to parse notification", err.Error(), helper.EmptyObj{})
+		res := helper.BuildErrorResponse("Failed to parse notification", err.Error())
 		return ctx.JSON(http.StatusBadRequest, res)
 	}
 
@@ -337,14 +336,14 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 	orderID, exists := notificationPayload["order_id"].(string)
 	if !exists {
 		// Handle the case when the key `order_id` is not found
-		res := helper.BuildErrorResponse("Order ID not found in notification", "", helper.EmptyObj{})
+		res := helper.BuildErrorResponse("Order ID not found in notification", "")
 		return ctx.JSON(http.StatusBadRequest, res)
 	}
 
 	transactionStatusResp, midErr := coreapi.CheckTransaction(orderID)
 	if midErr != nil {
 		// Handle the error when checking transaction status using Midtrans error type
-		res := helper.BuildErrorResponse("Failed to check transaction status", midErr.Message, helper.EmptyObj{})
+		res := helper.BuildErrorResponse("Failed to check transaction status", midErr.Message)
 		return ctx.JSON(http.StatusInternalServerError, res)
 	}
 
@@ -364,7 +363,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
 			if err != nil {
 				// Handle the error when parsing orderID
-				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error())
 				return ctx.JSON(http.StatusBadRequest, res)
 			}
 
@@ -372,14 +371,14 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			err = c.DepositService.UpdateDepositStatus(orderIDUint, 5)
 			if err != nil {
 				// Handle the error when updating the status
-				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		case "deny":
 			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
 			if err != nil {
 				// Handle the error when parsing orderID
-				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error())
 				return ctx.JSON(http.StatusBadRequest, res)
 			}
 
@@ -387,14 +386,14 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			err = c.DepositService.UpdateDepositStatus(orderIDUint, 4)
 			if err != nil {
 				// Handle the error when updating the status
-				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		case "cancel", "expire":
 			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
 			if err != nil {
 				// Handle the error when parsing orderID
-				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error())
 				return ctx.JSON(http.StatusBadRequest, res)
 			}
 
@@ -402,14 +401,14 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			err = c.DepositService.UpdateDepositStatus(orderIDUint, 3)
 			if err != nil {
 				// Handle the error when updating the status
-				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		case "pending":
 			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
 			if err != nil {
 				// Handle the error when parsing orderID
-				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error())
 				return ctx.JSON(http.StatusBadRequest, res)
 			}
 
@@ -417,7 +416,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			err = c.DepositService.UpdateDepositStatus(orderIDUint, 2)
 			if err != nil {
 				// Handle the error when updating the status
-				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		}
@@ -426,7 +425,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
 			if err != nil {
 				// Handle the error when parsing orderID
-				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to parse order ID", err.Error())
 				return ctx.JSON(http.StatusBadRequest, res)
 			}
 
@@ -434,7 +433,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			err = c.DepositService.UpdateDepositStatus(orderIDUint, 5)
 			if err != nil {
 				// Handle the error when updating the status
-				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error(), helper.EmptyObj{})
+				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		}

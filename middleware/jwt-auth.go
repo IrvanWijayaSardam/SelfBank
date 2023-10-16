@@ -17,7 +17,7 @@ func AuthorizeJWT(jwtService service.JWTService) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			authHeader := c.Request().Header.Get("Authorization")
 			if authHeader == "" {
-				response := helper.BuildErrorResponse("Failed to process request", "No Token Found !", nil)
+				response := helper.BuildErrorResponse("Failed to process request", "No Token Found !")
 				return c.JSON(http.StatusBadRequest, response)
 			}
 
@@ -25,7 +25,7 @@ func AuthorizeJWT(jwtService service.JWTService) echo.MiddlewareFunc {
 			token, err := jwtService.ValidateToken(tokenString)
 			if err != nil {
 				log.Println(err)
-				response := helper.BuildErrorResponse("Token is not valid", err.Error(), nil)
+				response := helper.BuildErrorResponse("Token is not valid", err.Error())
 				return c.JSON(http.StatusUnauthorized, response)
 			}
 			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -33,7 +33,7 @@ func AuthorizeJWT(jwtService service.JWTService) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			response := helper.BuildErrorResponse("Token is not valid", "Invalid Token Claims", nil)
+			response := helper.BuildErrorResponse("Token is not valid", "Invalid Token Claims")
 			return c.JSON(http.StatusUnauthorized, response)
 		}
 	}
