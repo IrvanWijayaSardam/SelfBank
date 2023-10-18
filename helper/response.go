@@ -32,7 +32,7 @@ func BuildResponse(status bool, message string, data interface{}) Response {
 	return res
 }
 
-func BuildErrorResponse(message string, data interface{}) ResponseError {
+func BuildErrorResponse(message string) ResponseError {
 	res := ResponseError{
 		Status:  false,
 		Message: message,

@@ -39,7 +39,7 @@ func (c *transactionController) Insert(context echo.Context) error {
 
 	if err != nil {
 		log.Println(err)
-		response := helper.BuildErrorResponse("Token is not valid", err.Error())
+		response := helper.BuildErrorResponse("Token is not valid")
 		return context.JSON(http.StatusUnauthorized, response)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -47,23 +47,35 @@ func (c *transactionController) Insert(context echo.Context) error {
 
 		userID, ok := claims["userid"].(string)
 		if !ok {
-			response := helper.BuildErrorResponse("Failed to process request", "UserID not found in claims")
+			response := helper.BuildErrorResponse("UserID not found in claims")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
+		accountNumber, ok := claims["accountnumber"].(string)
+		if !ok {
+			response := helper.BuildErrorResponse("Account Number not found in claims")
+			return context.JSON(http.StatusBadRequest, response)
+		}
 		var TransactionDTO dto.TransactionDTO
 		if err := context.Bind(&TransactionDTO); err != nil {
-			response := helper.BuildErrorResponse("Failed to process request", err.Error())
+			response := helper.BuildErrorResponse("Failed to process request")
+			return context.JSON(http.StatusBadRequest, response)
+		}
+
+		validateTo := c.TransactionService.ValidateAccNumber(TransactionDTO.TransactionTo)
+		if validateTo == false {
+			response := helper.BuildErrorResponse("Nomor Rekening Tujuan Tidak Valid")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
 		TransactionDTO.ID_User, _ = strconv.ParseUint(userID, 10, 64)
+		TransactionDTO.TransactionFrom, _ = strconv.ParseUint(accountNumber, 10, 64)
 		Transaction := c.TransactionService.InsertTransaction(TransactionDTO)
 
 		res := helper.BuildResponse(true, "Transaction Success", Transaction)
 		return context.JSON(http.StatusCreated, res)
 	} else {
-		res := helper.BuildErrorResponse("There's Something Wrong", "Contact Developer")
+		res := helper.BuildErrorResponse("There's Something Wrong")
 		return context.JSON(http.StatusBadRequest, res)
 	}
 }
@@ -89,7 +101,7 @@ func (c *transactionController) All(context echo.Context) error {
 	token, err := c.jwtService.ValidateToken(authHeader)
 	if err != nil {
 		log.Println(err)
-		response := helper.BuildErrorResponse("Token is not valid", err.Error())
+		response := helper.BuildErrorResponse("Token is not valid")
 		return context.JSON(http.StatusUnauthorized, response)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -97,20 +109,20 @@ func (c *transactionController) All(context echo.Context) error {
 
 		userID, ok := claims["userid"].(string)
 		if !ok {
-			response := helper.BuildErrorResponse("Failed to process request", "UserID not found in claims")
+			response := helper.BuildErrorResponse("UserID not found in claims")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
 		roleID, ok := claims["idrole"].(float64)
 		if !ok {
-			response := helper.BuildErrorResponse("Failed to process request", "IDRole not found in claims")
+			response := helper.BuildErrorResponse("IDRole not found in claims")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 		switch roleID {
 		case 1:
 			Transactions, err := c.TransactionService.All(page, pageSize)
 			if err != nil {
-				response := helper.BuildErrorResponse("Failed to fetch data", err.Error())
+				response := helper.BuildErrorResponse("Failed to fetch data")
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
@@ -140,7 +152,7 @@ func (c *transactionController) All(context echo.Context) error {
 			}
 			Transactions, err := c.TransactionService.FindTransactionByIDUser(userIDCnv, page, pageSize)
 			if err != nil {
-				response := helper.BuildErrorResponse("Failed to fetch data", err.Error())
+				response := helper.BuildErrorResponse("Failed to fetch data")
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
@@ -165,7 +177,7 @@ func (c *transactionController) All(context echo.Context) error {
 			return context.JSON(http.StatusOK, customResponse)
 		}
 	}
-	response := helper.BuildErrorResponse("Failed to process request", "Invalid token claims")
+	response := helper.BuildErrorResponse("Invalid token claims")
 	return context.JSON(http.StatusBadRequest, response)
 
 }
@@ -176,7 +188,7 @@ func (c *transactionController) FindTransactionByID(context echo.Context) error 
 	orderIDUint, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		// Handle the error when parsing orderID
-		res := helper.BuildErrorResponse("Failed to parse order ID", err.Error())
+		res := helper.BuildErrorResponse("Failed to parse order ID")
 		return context.JSON(http.StatusBadRequest, res)
 	}
 

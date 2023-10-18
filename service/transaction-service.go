@@ -26,6 +26,7 @@ type TransactionService interface {
 	TotalTransaction() int64
 	TotalTransactionByUserID(idUser uint64) int64
 	UpdateTransactionStatus(orderID uint64, newStatus uint64) error
+	ValidateAccNumber(accNumber uint64) bool
 }
 
 type transactionService struct {
@@ -50,6 +51,10 @@ func (service *transactionService) InsertTransaction(b dto.TransactionDTO) entit
 
 func (service *transactionService) TotalTransaction() int64 {
 	return service.TransactionRepository.TotalTransaction()
+}
+
+func (service *transactionService) ValidateAccNumber(accNumber uint64) bool {
+	return service.TransactionRepository.ValidateAccNumber(accNumber)
 }
 
 func (service *transactionService) TotalTransactionByUserID(idUser uint64) int64 {

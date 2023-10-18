@@ -17,6 +17,7 @@ type TransactionRepository interface {
 	TotalTransaction() int64
 	TotalTransactionByUserID(idUser uint64) int64
 	UpdateTransactionStatus(id uint64, newStatus uint64) error
+	ValidateAccNumber(accNumber uint64) bool
 }
 
 type TransactionConnection struct {
@@ -50,6 +51,19 @@ func NewTransactionRepository(db *gorm.DB) TransactionRepository {
 func (db *TransactionConnection) InsertTransaction(Transaction *entity.Transaction) entity.Transaction {
 	db.connection.Save(Transaction)
 	return *Transaction
+}
+
+func (db *TransactionConnection) ValidateAccNumber(accNumber uint64) bool {
+	var count int64
+	result := db.connection.Model(&entity.User{}).Where("account_number = ?", accNumber).Count(&count)
+	if result.Error != nil {
+		return false
+	}
+	if count != 0 {
+		return true
+	} else {
+		return false
+	}
 }
 
 func (db *TransactionConnection) All(page int, pageSize int) ([]entity.Transaction, error) {

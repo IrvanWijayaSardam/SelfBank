@@ -39,7 +39,7 @@ func (c *withdrawalController) Insert(context echo.Context) error {
 
 	if err != nil {
 		log.Println(err)
-		response := helper.BuildErrorResponse("Token is not valid", err.Error())
+		response := helper.BuildErrorResponse("Token is not valid")
 		return context.JSON(http.StatusUnauthorized, response)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -47,13 +47,13 @@ func (c *withdrawalController) Insert(context echo.Context) error {
 
 		userID, ok := claims["userid"].(string)
 		if !ok {
-			response := helper.BuildErrorResponse("Failed to process request", "UserID not found in claims")
+			response := helper.BuildErrorResponse("UserID not found in claims")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
 		var WithdrawalDTO dto.WithdrawalDTO
 		if err := context.Bind(&WithdrawalDTO); err != nil {
-			response := helper.BuildErrorResponse("Failed to process request", err.Error())
+			response := helper.BuildErrorResponse("Failed to process request")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
@@ -63,7 +63,7 @@ func (c *withdrawalController) Insert(context echo.Context) error {
 		res := helper.BuildResponse(true, "Withdrawal Success", Withdrawal)
 		return context.JSON(http.StatusCreated, res)
 	} else {
-		res := helper.BuildErrorResponse("There's Something Wrong", "Contact Developer")
+		res := helper.BuildErrorResponse("There's Something Wrong Contact Developer")
 		return context.JSON(http.StatusBadRequest, res)
 	}
 }
@@ -89,7 +89,7 @@ func (c *withdrawalController) All(context echo.Context) error {
 	token, err := c.jwtService.ValidateToken(authHeader)
 	if err != nil {
 		log.Println(err)
-		response := helper.BuildErrorResponse("Token is not valid", err.Error())
+		response := helper.BuildErrorResponse("Token is not valid")
 		return context.JSON(http.StatusUnauthorized, response)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -97,20 +97,20 @@ func (c *withdrawalController) All(context echo.Context) error {
 
 		userID, ok := claims["userid"].(string)
 		if !ok {
-			response := helper.BuildErrorResponse("Failed to process request", "UserID not found in claims")
+			response := helper.BuildErrorResponse("UserID not found in claims")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
 		roleID, ok := claims["idrole"].(float64)
 		if !ok {
-			response := helper.BuildErrorResponse("Failed to process request", "IDRole not found in claims")
+			response := helper.BuildErrorResponse("IDRole not found in claims")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 		switch roleID {
 		case 1:
 			Withdrawals, err := c.WithdrawalService.All(page, pageSize)
 			if err != nil {
-				response := helper.BuildErrorResponse("Failed to fetch data", err.Error())
+				response := helper.BuildErrorResponse("Failed to fetch data")
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
@@ -140,7 +140,7 @@ func (c *withdrawalController) All(context echo.Context) error {
 			}
 			Withdrawals, err := c.WithdrawalService.FindWithdrawalByIDUser(userIDCnv, page, pageSize)
 			if err != nil {
-				response := helper.BuildErrorResponse("Failed to fetch data", err.Error())
+				response := helper.BuildErrorResponse("Failed to fetch data")
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
@@ -165,7 +165,7 @@ func (c *withdrawalController) All(context echo.Context) error {
 			return context.JSON(http.StatusOK, customResponse)
 		}
 	}
-	response := helper.BuildErrorResponse("Failed to process request", "Invalid token claims")
+	response := helper.BuildErrorResponse("Invalid token claims")
 	return context.JSON(http.StatusBadRequest, response)
 
 }
@@ -176,7 +176,7 @@ func (c *withdrawalController) FindWithdrawalByID(context echo.Context) error {
 	orderIDUint, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		// Handle the error when parsing orderID
-		res := helper.BuildErrorResponse("Failed to parse order ID", err.Error())
+		res := helper.BuildErrorResponse("Failed to parse order ID")
 		return context.JSON(http.StatusBadRequest, res)
 	}
 

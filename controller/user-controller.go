@@ -38,7 +38,7 @@ func (c *userController) MyProfile(context echo.Context) error {
 	token, err := c.jwtService.ValidateToken(authHeader)
 	if err != nil {
 		log.Println(err)
-		response := helper.BuildErrorResponse("Token is not valid", err.Error())
+		response := helper.BuildErrorResponse("Token is not valid")
 		return context.JSON(http.StatusUnauthorized, response)
 	}
 
@@ -47,13 +47,13 @@ func (c *userController) MyProfile(context echo.Context) error {
 
 		userIDStr, ok := claims["userid"].(string)
 		if !ok {
-			response := helper.BuildErrorResponse("User ID not found in claims", "")
+			response := helper.BuildErrorResponse("User ID not found in claims")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
 		userID, err := strconv.ParseUint(userIDStr, 10, 64)
 		if err != nil {
-			response := helper.BuildErrorResponse("Failed to convert User ID to uint64", err.Error())
+			response := helper.BuildErrorResponse("Failed to convert User ID to uint64")
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
@@ -64,6 +64,6 @@ func (c *userController) MyProfile(context echo.Context) error {
 		return context.JSON(http.StatusOK, response)
 	}
 
-	response := helper.BuildErrorResponse("Invalid token claims", "")
+	response := helper.BuildErrorResponse("Invalid token claims")
 	return context.JSON(http.StatusUnauthorized, response)
 }
