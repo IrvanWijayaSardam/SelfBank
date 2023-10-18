@@ -1,6 +1,8 @@
 package service
 
 import (
+	"strconv"
+
 	"github.com/IrvanWijayaSardam/SelfBank/entity"
 	"github.com/IrvanWijayaSardam/SelfBank/repository"
 )
@@ -25,9 +27,12 @@ func (service *userService) FindUser(id uint64) entity.User {
 }
 
 func (service *userService) GetSaldo(id uint64) int64 {
+	user := service.userRepository.ProfileUser(id)
+
 	totalDeposit := service.userRepository.TotalDepositByUserID(id)
 	totalWithdrawal := service.userRepository.TotalWithdrawalByUserID(id)
-	balance := totalDeposit - totalWithdrawal
+	totalTransactionIn := service.userRepository.TotalTransactionByAccountNumber(strconv.Itoa(int(user.AccountNumber)))
+	balance := (totalDeposit + totalTransactionIn) - totalWithdrawal
 
 	return balance
 }

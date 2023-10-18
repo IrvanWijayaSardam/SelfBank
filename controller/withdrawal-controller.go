@@ -121,13 +121,11 @@ func (c *withdrawalController) All(context echo.Context) error {
 			customResponse := struct {
 				Status  bool                      `json:"status"`
 				Message string                    `json:"message"`
-				Errors  interface{}               `json:"errors"`
 				Data    []entity.Withdrawal       `json:"data"`
 				Paging  helper.PaginationResponse `json:"paging"`
 			}{
 				Status:  true,
 				Message: "OK!",
-				Errors:  nil,
 				Data:    Withdrawals,
 				Paging:  helper.PaginationResponse{TotalRecords: int(total), CurrentPage: page, TotalPages: totalPages},
 			}
@@ -151,13 +149,11 @@ func (c *withdrawalController) All(context echo.Context) error {
 			customResponse := struct {
 				Status  bool                      `json:"status"`
 				Message string                    `json:"message"`
-				Errors  interface{}               `json:"errors"`
 				Data    []entity.Withdrawal       `json:"data"`
 				Paging  helper.PaginationResponse `json:"paging"`
 			}{
 				Status:  true,
 				Message: "OK!",
-				Errors:  nil,
 				Data:    Withdrawals,
 				Paging:  helper.PaginationResponse{TotalRecords: int(total), CurrentPage: page, TotalPages: totalPages},
 			}

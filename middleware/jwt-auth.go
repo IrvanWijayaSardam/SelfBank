@@ -25,7 +25,7 @@ func AuthorizeJWT(jwtService service.JWTService) echo.MiddlewareFunc {
 			token, err := jwtService.ValidateToken(tokenString)
 			if err != nil {
 				log.Println(err)
-				response := helper.BuildErrorResponse("Token is not valid" + err.Error())
+				response := helper.BuildErrorResponse("Token is not valid -" + err.Error())
 				return c.JSON(http.StatusUnauthorized, response)
 			}
 			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {

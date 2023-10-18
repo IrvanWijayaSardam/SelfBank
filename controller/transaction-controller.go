@@ -58,7 +58,7 @@ func (c *transactionController) Insert(context echo.Context) error {
 		}
 		var TransactionDTO dto.TransactionDTO
 		if err := context.Bind(&TransactionDTO); err != nil {
-			response := helper.BuildErrorResponse("Failed to process request")
+			response := helper.BuildErrorResponse("Failed to process request " + err.Error())
 			return context.JSON(http.StatusBadRequest, response)
 		}
 
