@@ -30,17 +30,17 @@ type DepositService interface {
 	UpdateDepositStatus(orderID uint64, newStatus uint64) error
 }
 
-type transactionService struct {
+type depositService struct {
 	DepositRepository repository.DepositRepository
 }
 
 func NewDepositService(fundRep repository.DepositRepository) DepositService {
-	return &transactionService{
+	return &depositService{
 		DepositRepository: fundRep,
 	}
 }
 
-func (service *transactionService) InsertDeposit(b dto.DepositDTO) entity.Deposit {
+func (service *depositService) InsertDeposit(b dto.DepositDTO) entity.Deposit {
 	Deposit := entity.Deposit{}
 	err := smapping.FillStruct(&Deposit, smapping.MapFields(&b))
 	if err != nil {
@@ -50,7 +50,7 @@ func (service *transactionService) InsertDeposit(b dto.DepositDTO) entity.Deposi
 	return res
 }
 
-func (service *transactionService) InsertPaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error {
+func (service *depositService) InsertPaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error {
 	err := service.DepositRepository.StorePaymentToken(transactionID, paymentToken, virtualAcc)
 	if err != nil {
 		if midErr, ok := err.(*midtrans.Error); ok {
@@ -61,15 +61,15 @@ func (service *transactionService) InsertPaymentToken(transactionID uint64, paym
 	return nil
 }
 
-func (service *transactionService) TotalDeposit() int64 {
+func (service *depositService) TotalDeposit() int64 {
 	return service.DepositRepository.TotalDeposit()
 }
 
-func (service *transactionService) TotalDepositByUserID(idUser uint64) int64 {
+func (service *depositService) TotalDepositByUserID(idUser uint64) int64 {
 	return service.DepositRepository.TotalDepositByUserID(idUser)
 }
 
-func (service *transactionService) All(page int, pageSize int) ([]entity.Deposit, error) {
+func (service *depositService) All(page int, pageSize int) ([]entity.Deposit, error) {
 	if page <= 0 || pageSize <= 0 {
 		return nil, errors.New("Invalid page or pageSize values")
 	}
@@ -77,7 +77,7 @@ func (service *transactionService) All(page int, pageSize int) ([]entity.Deposit
 	return service.DepositRepository.All(page, pageSize)
 }
 
-func (service *transactionService) FindDepositByIDUser(idUser uint64, page int, pageSize int) ([]entity.Deposit, error) {
+func (service *depositService) FindDepositByIDUser(idUser uint64, page int, pageSize int) ([]entity.Deposit, error) {
 	if page <= 0 || pageSize <= 0 {
 		return nil, errors.New("Invalid page or pageSize values")
 	}
@@ -85,11 +85,11 @@ func (service *transactionService) FindDepositByIDUser(idUser uint64, page int, 
 	return service.DepositRepository.FindDepositByIDUser(idUser, page, pageSize)
 }
 
-func (service *transactionService) FindDepositByID(id uint64) *entity.Deposit {
+func (service *depositService) FindDepositByID(id uint64) *entity.Deposit {
 	return service.DepositRepository.FindDepositByID(id)
 }
 
-func (service *transactionService) SaveFile(file *multipart.FileHeader) (string, error) {
+func (service *depositService) SaveFile(file *multipart.FileHeader) (string, error) {
 	src, err := file.Open()
 	if err != nil {
 		return "", err
@@ -123,7 +123,7 @@ func (service *transactionService) SaveFile(file *multipart.FileHeader) (string,
 	return fileName, nil
 }
 
-func (service *transactionService) UpdateDepositStatus(orderID uint64, newStatus uint64) error {
+func (service *depositService) UpdateDepositStatus(orderID uint64, newStatus uint64) error {
 	// Fetch the MasterJual entity by order ID
 	masterJual := service.DepositRepository.FindDepositByID(orderID)
 	if masterJual.ID == 0 {

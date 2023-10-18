@@ -29,19 +29,19 @@ type DepositController interface {
 	Refund(context echo.Context) error
 }
 
-type transactionController struct {
+type depositController struct {
 	DepositService service.DepositService
 	jwtService     service.JWTService
 }
 
-func NewDepositController(transactionService service.DepositService, jwtService service.JWTService) DepositController {
-	return &transactionController{
-		DepositService: transactionService,
+func NewDepositController(depositService service.DepositService, jwtService service.JWTService) DepositController {
+	return &depositController{
+		DepositService: depositService,
 		jwtService:     jwtService,
 	}
 }
 
-func (c *transactionController) Insert(context echo.Context) error {
+func (c *depositController) Insert(context echo.Context) error {
 	authHeader := context.Request().Header.Get("Authorization")
 	errEnv := godotenv.Load()
 	if errEnv != nil {
@@ -114,7 +114,7 @@ func (c *transactionController) Insert(context echo.Context) error {
 			chargeResp, err := coreapi.ChargeTransaction(chargeReq)
 			if err != nil {
 				c.DepositService.UpdateDepositStatus(Deposit.ID, 3)
-				res := helper.BuildErrorResponse("Failed to charge transaction", err.Error())
+				res := helper.BuildErrorResponse("Failed to charge deposit", err.Error())
 				context.JSON(http.StatusInternalServerError, res)
 				return err
 			}
@@ -145,7 +145,7 @@ func (c *transactionController) Insert(context echo.Context) error {
 	return context.JSON(http.StatusUnauthorized, response)
 }
 
-func (c *transactionController) All(context echo.Context) error {
+func (c *depositController) All(context echo.Context) error {
 	pageParam := context.QueryParam("page")
 	pageSizeParam := context.QueryParam("pageSize")
 
@@ -247,7 +247,7 @@ func (c *transactionController) All(context echo.Context) error {
 
 }
 
-func (c *transactionController) Refund(context echo.Context) error {
+func (c *depositController) Refund(context echo.Context) error {
 	authHeader := context.Request().Header.Get("Authorization")
 	errEnv := godotenv.Load()
 	if errEnv != nil {
@@ -287,8 +287,8 @@ func (c *transactionController) Refund(context echo.Context) error {
 
 		refundResp, err := coreapi.DirectRefundTransaction(orderIDStr, refundReq)
 		if err != nil {
-			// Handle the error when refunding the transaction
-			res := helper.BuildErrorResponse("Failed to refund transaction", err.Error())
+			// Handle the error when refunding the deposit
+			res := helper.BuildErrorResponse("Failed to refund deposit", err.Error())
 			context.JSON(http.StatusInternalServerError, res)
 			return err
 		}
@@ -307,7 +307,7 @@ func (c *transactionController) Refund(context echo.Context) error {
 	return context.JSON(http.StatusUnauthorized, response)
 }
 
-func (c *transactionController) FindDepositByID(context echo.Context) error {
+func (c *depositController) FindDepositByID(context echo.Context) error {
 	id := context.Param("id")
 
 	orderIDUint, err := strconv.ParseUint(id, 10, 64)
@@ -322,7 +322,7 @@ func (c *transactionController) FindDepositByID(context echo.Context) error {
 	return context.JSON(http.StatusOK, response)
 }
 
-func (c *transactionController) HandleMidtransNotification(ctx echo.Context) error {
+func (c *depositController) HandleMidtransNotification(ctx echo.Context) error {
 	var notificationPayload map[string]interface{}
 
 	// 1. Parse JSON request body
@@ -340,23 +340,23 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 		return ctx.JSON(http.StatusBadRequest, res)
 	}
 
-	transactionStatusResp, midErr := coreapi.CheckTransaction(orderID)
+	depositStatusResp, midErr := coreapi.CheckTransaction(orderID)
 	if midErr != nil {
-		// Handle the error when checking transaction status using Midtrans error type
-		res := helper.BuildErrorResponse("Failed to check transaction status", midErr.Message)
+		// Handle the error when checking deposit status using Midtrans error type
+		res := helper.BuildErrorResponse("Failed to check deposit status", midErr.Message)
 		return ctx.JSON(http.StatusInternalServerError, res)
 	}
 
-	// 4. Update transaction status in your database based on the response
-	if transactionStatusResp != nil {
+	// 4. Update deposit status in your database based on the response
+	if depositStatusResp != nil {
 		status := ""
-		switch transactionStatusResp.TransactionStatus {
+		switch depositStatusResp.TransactionStatus {
 		case "capture":
-			if transactionStatusResp.FraudStatus == "challenge" {
-				// Set transaction status on your database to 'challenge'
+			if depositStatusResp.FraudStatus == "challenge" {
+				// Set deposit status on your database to 'challenge'
 				status = "challenge"
-			} else if transactionStatusResp.FraudStatus == "accept" {
-				// Set transaction status on your database to 'success'
+			} else if depositStatusResp.FraudStatus == "accept" {
+				// Set deposit status on your database to 'success'
 				status = "success"
 			}
 		case "settlement":
@@ -371,7 +371,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			err = c.DepositService.UpdateDepositStatus(orderIDUint, 5)
 			if err != nil {
 				// Handle the error when updating the status
-				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error())
+				res := helper.BuildErrorResponse("Failed to update deposit status", err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		case "deny":
@@ -386,7 +386,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			err = c.DepositService.UpdateDepositStatus(orderIDUint, 4)
 			if err != nil {
 				// Handle the error when updating the status
-				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error())
+				res := helper.BuildErrorResponse("Failed to update deposit status", err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		case "cancel", "expire":
@@ -401,7 +401,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			err = c.DepositService.UpdateDepositStatus(orderIDUint, 3)
 			if err != nil {
 				// Handle the error when updating the status
-				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error())
+				res := helper.BuildErrorResponse("Failed to update deposit status", err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		case "pending":
@@ -416,7 +416,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			err = c.DepositService.UpdateDepositStatus(orderIDUint, 2)
 			if err != nil {
 				// Handle the error when updating the status
-				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error())
+				res := helper.BuildErrorResponse("Failed to update deposit status", err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		}
@@ -433,7 +433,7 @@ func (c *transactionController) HandleMidtransNotification(ctx echo.Context) err
 			err = c.DepositService.UpdateDepositStatus(orderIDUint, 5)
 			if err != nil {
 				// Handle the error when updating the status
-				res := helper.BuildErrorResponse("Failed to update transaction status", err.Error())
+				res := helper.BuildErrorResponse("Failed to update deposit status", err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		}

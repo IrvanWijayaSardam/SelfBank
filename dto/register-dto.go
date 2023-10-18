@@ -1,8 +1,8 @@
 package dto
 
 type RegisterDTO struct {
-	Namadepan    string `json:"namadepan" form:"namadepan" binding:"required"`
-	Namabelakang string `json:"namabelakang" form:"namabelakang" binding:"required"`
+	Namadepan    string `json:"nama_depan" form:"nama_depan" binding:"required"`
+	Namabelakang string `json:"nama_belakang" form:"nama_belakang" binding:"required"`
 	Email        string `json:"email" form:"email" binding:"required,email"`
 	Username     string `json:"username" form:"username" binding:"required"`
 	Password     string `json:"password" form:"password" binding:"required"`

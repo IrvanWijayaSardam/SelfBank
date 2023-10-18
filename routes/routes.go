@@ -37,6 +37,17 @@ func WithdrawalRoutes(e *echo.Echo, withdrawalService service.WithdrawalService,
 
 }
 
+func TransactionRoutes(e *echo.Echo, transactionService service.TransactionService,
+	transactionController controller.TransactionController, jwtMiddleware echo.MiddlewareFunc) {
+	authRoutes := e.Group("/api/transaction")
+
+	authRoutes.Use(jwtMiddleware)
+
+	authRoutes.POST("/", transactionController.Insert)
+	authRoutes.GET("/", transactionController.All)
+	authRoutes.GET("/:id", transactionController.FindTransactionByID)
+}
+
 func UserRoutes(e *echo.Echo, userService service.UserService,
 	userController controller.UserController, jwtMiddleware echo.MiddlewareFunc) {
 	authRoutes := e.Group("/api/user")
