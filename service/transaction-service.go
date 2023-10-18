@@ -3,17 +3,12 @@ package service
 import (
 	"errors"
 	"fmt"
-	"io"
 	"log"
-	"mime/multipart"
-	"os"
-	"path/filepath"
 
 	"github.com/IrvanWijayaSardam/SelfBank/dto"
 	"github.com/IrvanWijayaSardam/SelfBank/entity"
 	"github.com/IrvanWijayaSardam/SelfBank/repository"
 
-	"github.com/google/uuid"
 	"github.com/mashingan/smapping"
 )
 
@@ -22,7 +17,6 @@ type TransactionService interface {
 	All(page int, pageSize int) ([]entity.Transaction, error)
 	FindTransactionByIDUser(idUiser uint64, int, pageSize int) ([]entity.Transaction, error)
 	FindTransactionByID(id uint64) *entity.Transaction
-	SaveFile(file *multipart.FileHeader) (string, error)
 	TotalTransaction() int64
 	TotalTransactionByUserID(idUser uint64) int64
 	UpdateTransactionStatus(orderID uint64, newStatus uint64) error
@@ -79,40 +73,6 @@ func (service *transactionService) FindTransactionByIDUser(idUser uint64, page i
 
 func (service *transactionService) FindTransactionByID(id uint64) *entity.Transaction {
 	return service.TransactionRepository.FindTransactionByID(id)
-}
-
-func (service *transactionService) SaveFile(file *multipart.FileHeader) (string, error) {
-	src, err := file.Open()
-	if err != nil {
-		return "", err
-	}
-	defer src.Close()
-
-	cdnDir := "cdn" // Specify the desired directory name
-
-	// Create the cdn directory if it doesn't exist in the current working directory
-	err = os.MkdirAll(cdnDir, 0755)
-	if err != nil {
-		return "", err
-	}
-
-	// Generate a random file name using UUID and append the original file extension
-	fileExt := filepath.Ext(file.Filename)
-	fileName := uuid.New().String() + fileExt
-	filePath := filepath.Join(cdnDir, fileName)
-
-	dst, err := os.Create(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, src)
-	if err != nil {
-		return "", err
-	}
-
-	return fileName, nil
 }
 
 func (service *transactionService) UpdateTransactionStatus(orderID uint64, newStatus uint64) error {

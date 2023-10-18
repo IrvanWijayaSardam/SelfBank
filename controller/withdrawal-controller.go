@@ -23,12 +23,14 @@ type WithdrawalController interface {
 
 type withdrawalController struct {
 	WithdrawalService service.WithdrawalService
+	UserService       service.UserService
 	jwtService        service.JWTService
 }
 
-func NewWithdrawalController(withdrawalService service.WithdrawalService, jwtService service.JWTService) WithdrawalController {
+func NewWithdrawalController(withdrawalService service.WithdrawalService, userService service.UserService, jwtService service.JWTService) WithdrawalController {
 	return &withdrawalController{
 		WithdrawalService: withdrawalService,
+		UserService:       userService,
 		jwtService:        jwtService,
 	}
 }
@@ -58,10 +60,17 @@ func (c *withdrawalController) Insert(context echo.Context) error {
 		}
 
 		WithdrawalDTO.ID_User, _ = strconv.ParseUint(userID, 10, 64)
-		Withdrawal := c.WithdrawalService.InsertWithdrawal(WithdrawalDTO)
+		currentSaldo := c.UserService.GetSaldo(WithdrawalDTO.ID_User)
 
-		res := helper.BuildResponse(true, "Withdrawal Success", Withdrawal)
-		return context.JSON(http.StatusCreated, res)
+		if currentSaldo >= int64(WithdrawalDTO.Amount) {
+			Withdrawal := c.WithdrawalService.InsertWithdrawal(WithdrawalDTO)
+			res := helper.BuildResponse(true, "Withdrawal Success", Withdrawal)
+			return context.JSON(http.StatusCreated, res)
+		} else {
+			res := helper.BuildErrorResponse("Cannot continue withdrawal because your balance is insufficient")
+			return context.JSON(http.StatusBadRequest, res)
+		}
+
 	} else {
 		res := helper.BuildErrorResponse("There's Something Wrong Contact Developer")
 		return context.JSON(http.StatusBadRequest, res)
