@@ -22,9 +22,13 @@
 - **Payment Gateway**: Midtrans
 - **Authentication**: JWT
 
+## API Documentation
+
+For detailed information on the API endpoints, please refer to our [API Documentation](https://docs.google.com/document/d/1t9QqcgyiKH2Dj-nqPhfKoXru2-d1lIxJwhP8Rcgh25c/edit?usp=sharing).
+
 ## Getting Started
 
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/selfbank.git
+   git clone https://github.com/IrvanWijayaSardam/SelfBank.git
