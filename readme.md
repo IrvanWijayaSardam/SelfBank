@@ -1,7 +1,4 @@
 <h1 align="center">SelfBank</h1>
-<p align="center">
-  <img src="assets/selfbank-erd.png" alt="SelfBank ERD">
-</p>
 
 <p align="center">
   Your personal selfbank - Deposit, Withdraw, and more!
@@ -22,6 +19,13 @@
 - **Payment Gateway**: Midtrans
 - **Authentication**: JWT
 
+## Currently Supported Payment Methods
+
+SelfBank supports the following payment methods:
+
+- Bank Transfer (e.g, BCA, BNI, BRI)
+- E-Wallets (e.g., GoPay, OVO) !!Coming Soon!!
+
 ## API Documentation
 
 For detailed information on the API endpoints, please refer to our [API Documentation](https://docs.google.com/document/d/1t9QqcgyiKH2Dj-nqPhfKoXru2-d1lIxJwhP8Rcgh25c/edit?usp=sharing).
@@ -32,3 +36,8 @@ For detailed information on the API endpoints, please refer to our [API Document
 
    ```bash
    git clone https://github.com/IrvanWijayaSardam/SelfBank.git
+## ERD
+
+<p align="center">
+  <img src="assets/selfbank-erd.png" alt="SelfBank ERD">
+</p>
