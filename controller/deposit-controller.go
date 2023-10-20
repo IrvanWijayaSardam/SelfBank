@@ -73,6 +73,7 @@ func (c *depositController) Insert(context echo.Context) error {
 		}
 
 		DepositDTO.ID_User, _ = strconv.ParseUint(userID, 10, 64)
+
 		Deposit := c.DepositService.InsertDeposit(DepositDTO)
 
 		// Initialize Midtrans client with your server key and environment
@@ -106,7 +107,7 @@ func (c *depositController) Insert(context echo.Context) error {
 				PaymentType:  "bank_transfer",
 				BankTransfer: &coreapi.BankTransferDetails{Bank: midtransBank},
 				TransactionDetails: midtrans.TransactionDetails{
-					OrderID:  strconv.FormatUint(Deposit.ID, 10),
+					OrderID:  Deposit.ID,
 					GrossAmt: int64(Deposit.Amount),
 				},
 			}
@@ -127,13 +128,44 @@ func (c *depositController) Insert(context echo.Context) error {
 				}
 			}
 
-			// Assuming you have a "response" map to store the response data
 			response := make(map[string]interface{})
 			response["va_account"] = vaAccount
-			c.DepositService.InsertPaymentToken(Deposit.ID, chargeResp.OrderID, vaAccount)
+			c.DepositService.InsertPaymentToken(Deposit.ID, chargeResp.TransactionID, vaAccount, "-")
 
 			// Respond with success message and the response data
 			res := helper.BuildResponse(true, "Deposit inserted successfully!", response)
+			return context.JSON(http.StatusCreated, res)
+		} else if DepositDTO.PaymentType == "10" {
+			chargeReq := &coreapi.ChargeReq{
+				Gopay: &coreapi.GopayDetails{
+					EnableCallback: true,
+				},
+				PaymentType: "gopay",
+				TransactionDetails: midtrans.TransactionDetails{
+					OrderID:  Deposit.ID,
+					GrossAmt: int64(Deposit.Amount),
+				},
+			}
+
+			chargeResp, err := coreapi.ChargeTransaction(chargeReq)
+			if err != nil {
+				res := helper.BuildErrorResponse("Failed to charge transaction")
+				return context.JSON(http.StatusInternalServerError, res)
+			}
+			response := make(map[string]interface{})
+
+			if len(chargeResp.Actions) > 0 {
+				for _, action := range chargeResp.Actions {
+					if action.Name == "deeplink-redirect" {
+						deepLinkURL := action.URL
+						response["callback_url"] = deepLinkURL
+						c.DepositService.InsertPaymentToken(Deposit.ID, chargeResp.TransactionID, "-", deepLinkURL)
+						break
+					}
+				}
+			}
+			response["va_account"] = ""
+			res := helper.BuildResponse(true, "Transaction inserted successfully!", response)
 			return context.JSON(http.StatusCreated, res)
 		} else {
 			res := helper.BuildErrorResponse("Unsupported payment type")
@@ -306,14 +338,7 @@ func (c *depositController) Refund(context echo.Context) error {
 func (c *depositController) FindDepositByID(context echo.Context) error {
 	id := context.Param("id")
 
-	orderIDUint, err := strconv.ParseUint(id, 10, 64)
-	if err != nil {
-		// Handle the error when parsing orderID
-		res := helper.BuildErrorResponse("Failed to parse order ID")
-		return context.JSON(http.StatusBadRequest, res)
-	}
-
-	Deposit := c.DepositService.FindDepositByID(orderIDUint)
+	Deposit := c.DepositService.FindDepositByID(id)
 	response := helper.BuildResponse(true, "OK!", Deposit)
 	return context.JSON(http.StatusOK, response)
 }
@@ -343,73 +368,38 @@ func (c *depositController) HandleMidtransNotification(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, res)
 	}
 
-	// 4. Update deposit status in your database based on the response
 	if depositStatusResp != nil {
 		status := ""
 		switch depositStatusResp.TransactionStatus {
 		case "capture":
 			if depositStatusResp.FraudStatus == "challenge" {
-				// Set deposit status on your database to 'challenge'
 				status = "challenge"
 			} else if depositStatusResp.FraudStatus == "accept" {
-				// Set deposit status on your database to 'success'
 				status = "success"
 			}
 		case "settlement":
-			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
-			if err != nil {
-				// Handle the error when parsing orderID
-				res := helper.BuildErrorResponse("Failed to parse order ID" + err.Error())
-				return ctx.JSON(http.StatusBadRequest, res)
-			}
-
-			// Update the status of MasterJual to "2" in your database
-			err = c.DepositService.UpdateDepositStatus(orderIDUint, 5)
+			err := c.DepositService.UpdateDepositStatus(orderID, 5)
 			if err != nil {
 				// Handle the error when updating the status
 				res := helper.BuildErrorResponse("Failed to update deposit status" + err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		case "deny":
-			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
-			if err != nil {
-				// Handle the error when parsing orderID
-				res := helper.BuildErrorResponse("Failed to parse order ID" + err.Error())
-				return ctx.JSON(http.StatusBadRequest, res)
-			}
-
-			// Update the status of MasterJual to "2" in your database
-			err = c.DepositService.UpdateDepositStatus(orderIDUint, 4)
+			err := c.DepositService.UpdateDepositStatus(orderID, 4)
 			if err != nil {
 				// Handle the error when updating the status
 				res := helper.BuildErrorResponse("Failed to update deposit status" + err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		case "cancel", "expire":
-			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
-			if err != nil {
-				// Handle the error when parsing orderID
-				res := helper.BuildErrorResponse("Failed to parse order ID" + err.Error())
-				return ctx.JSON(http.StatusBadRequest, res)
-			}
-
-			// Update the status of MasterJual to "2" in your database
-			err = c.DepositService.UpdateDepositStatus(orderIDUint, 3)
+			err := c.DepositService.UpdateDepositStatus(orderID, 3)
 			if err != nil {
 				// Handle the error when updating the status
 				res := helper.BuildErrorResponse("Failed to update deposit status" + err.Error())
 				return ctx.JSON(http.StatusInternalServerError, res)
 			}
 		case "pending":
-			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
-			if err != nil {
-				// Handle the error when parsing orderID
-				res := helper.BuildErrorResponse("Failed to parse order ID" + err.Error())
-				return ctx.JSON(http.StatusBadRequest, res)
-			}
-
-			// Update status transaski ke 4 , status pending
-			err = c.DepositService.UpdateDepositStatus(orderIDUint, 2)
+			err := c.DepositService.UpdateDepositStatus(orderID, 2)
 			if err != nil {
 				// Handle the error when updating the status
 				res := helper.BuildErrorResponse("Failed to update deposit status" + err.Error())
@@ -418,15 +408,7 @@ func (c *depositController) HandleMidtransNotification(ctx echo.Context) error {
 		}
 
 		if status == "success" {
-			orderIDUint, err := strconv.ParseUint(orderID, 10, 64)
-			if err != nil {
-				// Handle the error when parsing orderID
-				res := helper.BuildErrorResponse("Failed to parse order ID" + err.Error())
-				return ctx.JSON(http.StatusBadRequest, res)
-			}
-
-			// Update status transaski ke 5 , status sukses
-			err = c.DepositService.UpdateDepositStatus(orderIDUint, 5)
+			err := c.DepositService.UpdateDepositStatus(orderID, 5)
 			if err != nil {
 				// Handle the error when updating the status
 				res := helper.BuildErrorResponse("Failed to update deposit status" + err.Error())

@@ -23,12 +23,14 @@ type TransactionController interface {
 
 type transactionController struct {
 	TransactionService service.TransactionService
+	UserService        service.UserService
 	jwtService         service.JWTService
 }
 
-func NewTransactionController(transactionService service.TransactionService, jwtService service.JWTService) TransactionController {
+func NewTransactionController(transactionService service.TransactionService, userService service.UserService, jwtService service.JWTService) TransactionController {
 	return &transactionController{
 		TransactionService: transactionService,
+		UserService:        userService,
 		jwtService:         jwtService,
 	}
 }
@@ -70,10 +72,18 @@ func (c *transactionController) Insert(context echo.Context) error {
 
 		TransactionDTO.ID_User, _ = strconv.ParseUint(userID, 10, 64)
 		TransactionDTO.TransactionFrom, _ = strconv.ParseUint(accountNumber, 10, 64)
-		Transaction := c.TransactionService.InsertTransaction(TransactionDTO)
 
-		res := helper.BuildResponse(true, "Transaction Success", Transaction)
-		return context.JSON(http.StatusCreated, res)
+		TransactionDTO.ID_User, _ = strconv.ParseUint(userID, 10, 64)
+		currentSaldo := c.UserService.GetSaldo(TransactionDTO.ID_User)
+
+		if currentSaldo >= int64(TransactionDTO.Amount) {
+			Transaction := c.TransactionService.InsertTransaction(TransactionDTO)
+			res := helper.BuildResponse(true, "Transaction Success", Transaction)
+			return context.JSON(http.StatusCreated, res)
+		} else {
+			res := helper.BuildErrorResponse("Cannot continue withdrawal because your balance is insufficient")
+			return context.JSON(http.StatusBadRequest, res)
+		}
 	} else {
 		res := helper.BuildErrorResponse("There's Something Wrong")
 		return context.JSON(http.StatusBadRequest, res)

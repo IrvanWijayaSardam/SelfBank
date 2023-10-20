@@ -12,12 +12,12 @@ type DepositRepository interface {
 	InsertDeposit(brg *entity.Deposit) entity.Deposit
 	All(page int, pageSize int) ([]entity.Deposit, error)
 	UpdateDeposit(plg entity.Deposit) entity.Deposit
-	FindDepositByID(id uint64) *entity.Deposit
+	FindDepositByID(id string) *entity.Deposit
 	FindDepositByIDUser(id uint64, page int, pageSize int) ([]entity.Deposit, error)
 	TotalDeposit() int64
 	TotalDepositByUserID(idUser uint64) int64
-	StorePaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error
-	UpdateDepositStatus(id uint64, newStatus uint64) error
+	StorePaymentToken(depositID string, paymentToken string, virtualAcc string, callbackUrl string) error
+	UpdateDepositStatus(id string, newStatus uint64) error
 }
 
 type DepositConnection struct {
@@ -53,11 +53,12 @@ func (db *DepositConnection) InsertDeposit(Deposit *entity.Deposit) entity.Depos
 	return *Deposit
 }
 
-func (db *DepositConnection) StorePaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error {
+func (db *DepositConnection) StorePaymentToken(depositID string, paymentToken string, virtualAcc string, callbackUrl string) error {
 	paymentTokenRecord := entity.PaymentToken{
-		DepositID:    transactionID,
+		DepositID:    depositID,
 		PaymentToken: paymentToken,
 		VirtualAcc:   virtualAcc,
+		CallbackUrl:  callbackUrl,
 	}
 	result := db.connection.Create(&paymentTokenRecord)
 	if result.Error != nil {
@@ -103,7 +104,7 @@ func (db *DepositConnection) UpdateDeposit(Deposit entity.Deposit) entity.Deposi
 	return Deposit
 }
 
-func (db *DepositConnection) FindDepositByID(id uint64) *entity.Deposit {
+func (db *DepositConnection) FindDepositByID(id string) *entity.Deposit {
 	var Deposit entity.Deposit
 	result := db.connection.Where("id = ? ", id).Take(&Deposit)
 	if result.Error != nil || result.RowsAffected == 0 {
@@ -113,7 +114,7 @@ func (db *DepositConnection) FindDepositByID(id uint64) *entity.Deposit {
 	return &Deposit
 }
 
-func (db *DepositConnection) UpdateDepositStatus(id uint64, newStatus uint64) error {
+func (db *DepositConnection) UpdateDepositStatus(id string, newStatus uint64) error {
 	var trx entity.Deposit
 	result := db.connection.First(&trx, id)
 	if result.Error != nil {

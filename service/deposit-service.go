@@ -8,9 +8,11 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/IrvanWijayaSardam/SelfBank/dto"
 	"github.com/IrvanWijayaSardam/SelfBank/entity"
+	"github.com/IrvanWijayaSardam/SelfBank/helper"
 	"github.com/IrvanWijayaSardam/SelfBank/repository"
 	"github.com/midtrans/midtrans-go"
 
@@ -21,13 +23,13 @@ import (
 type DepositService interface {
 	InsertDeposit(Deposit dto.DepositDTO) entity.Deposit
 	All(page int, pageSize int) ([]entity.Deposit, error)
-	FindDepositByIDUser(idUiser uint64, int, pageSize int) ([]entity.Deposit, error)
-	FindDepositByID(id uint64) *entity.Deposit
+	FindDepositByIDUser(idUser uint64, int, pageSize int) ([]entity.Deposit, error)
+	FindDepositByID(id string) *entity.Deposit
 	SaveFile(file *multipart.FileHeader) (string, error)
 	TotalDeposit() int64
 	TotalDepositByUserID(idUser uint64) int64
-	InsertPaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error
-	UpdateDepositStatus(orderID uint64, newStatus uint64) error
+	InsertPaymentToken(transactionID string, paymentToken string, virtualAcc string, callbackUrl string) error
+	UpdateDepositStatus(orderID string, newStatus uint64) error
 }
 
 type depositService struct {
@@ -46,12 +48,14 @@ func (service *depositService) InsertDeposit(b dto.DepositDTO) entity.Deposit {
 	if err != nil {
 		log.Fatalf("Failed map %v", err)
 	}
+	numInt := int(helper.GenerateTrxId())
+	Deposit.ID = strconv.Itoa(numInt)
 	res := service.DepositRepository.InsertDeposit(&Deposit)
 	return res
 }
 
-func (service *depositService) InsertPaymentToken(transactionID uint64, paymentToken string, virtualAcc string) error {
-	err := service.DepositRepository.StorePaymentToken(transactionID, paymentToken, virtualAcc)
+func (service *depositService) InsertPaymentToken(transactionID string, paymentToken string, virtualAcc string, callbackUrl string) error {
+	err := service.DepositRepository.StorePaymentToken(transactionID, paymentToken, virtualAcc, callbackUrl)
 	if err != nil {
 		if midErr, ok := err.(*midtrans.Error); ok {
 			return errors.New(midErr.Message)
@@ -85,7 +89,7 @@ func (service *depositService) FindDepositByIDUser(idUser uint64, page int, page
 	return service.DepositRepository.FindDepositByIDUser(idUser, page, pageSize)
 }
 
-func (service *depositService) FindDepositByID(id uint64) *entity.Deposit {
+func (service *depositService) FindDepositByID(id string) *entity.Deposit {
 	return service.DepositRepository.FindDepositByID(id)
 }
 
@@ -123,10 +127,10 @@ func (service *depositService) SaveFile(file *multipart.FileHeader) (string, err
 	return fileName, nil
 }
 
-func (service *depositService) UpdateDepositStatus(orderID uint64, newStatus uint64) error {
+func (service *depositService) UpdateDepositStatus(orderID string, newStatus uint64) error {
 	// Fetch the MasterJual entity by order ID
 	masterJual := service.DepositRepository.FindDepositByID(orderID)
-	if masterJual.ID == 0 {
+	if masterJual.ID == "0" {
 		return fmt.Errorf("MasterJual not found for order ID %s", orderID)
 	}
 

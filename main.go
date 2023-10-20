@@ -37,7 +37,7 @@ func main() {
 	depositController := controller.NewDepositController(depositService, jwtService)
 	withdrawalController := controller.NewWithdrawalController(withdrawalService, userService, jwtService)
 	userController := controller.NewUserController(userService, jwtService)
-	transactionController := controller.NewTransactionController(transactioNService, jwtService)
+	transactionController := controller.NewTransactionController(transactioNService, userService, jwtService)
 
 	routes.RegisterRoutes(e, jwtService, authController)
 	routes.DepositRoutes(e, depositService, depositController, jwtMiddleware)
