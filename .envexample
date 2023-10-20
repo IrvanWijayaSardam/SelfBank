@@ -1,0 +1,15 @@
+DB_USER=<dbuser>
+DB_PASS=<dbpassword>
+DB_HOST=<dbhost>
+DB_NAME=<dbname>
+BASE_URL=<baseurl>
+
+MT_SERVER_KEY=<MidtransServerKey>
+MT_CLIENT_KEY=<MidtransClientKey>
+
+CLOUDINARY_CLOUD_NAME=<CloudName>
+CLOUDINARY_API_KEY=<CloudinaryApiKey>
+CLOUDINARY_API_SECRET=<CloudinaryApiSecret>
+CLOUDINARY_UPLOAD_FOLDER=<Folder>
+
+JWT_SECRET=<JWTSecret>

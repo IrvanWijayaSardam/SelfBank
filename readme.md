@@ -23,8 +23,8 @@
 
 SelfBank supports the following payment methods:
 
-- Bank Transfer (e.g, BCA, BNI, BRI)
-- E-Wallets (e.g., GoPay, OVO) !!Coming Soon!!
+- Bank Transfer :  BCA, BNI, BRI
+- E-Wallets : Gopay
 
 ## API Documentation
 
