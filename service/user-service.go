@@ -10,6 +10,7 @@ import (
 type UserService interface {
 	FindUser(id uint64) entity.User
 	GetSaldo(idUser uint64) int64
+	UpdateUser(user entity.User) entity.User
 }
 
 type userService struct {
@@ -24,6 +25,10 @@ func NewUserService(userRep repository.UserRepository) UserService {
 
 func (service *userService) FindUser(id uint64) entity.User {
 	return service.userRepository.ProfileUser(id)
+}
+
+func (service *userService) UpdateUser(user entity.User) entity.User {
+	return service.userRepository.UpdateUser(user)
 }
 
 func (service *userService) GetSaldo(id uint64) int64 {

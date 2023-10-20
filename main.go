@@ -45,6 +45,7 @@ func main() {
 	routes.WithdrawalRoutes(e, withdrawalService, withdrawalController, jwtMiddleware)
 	routes.UserRoutes(e, userService, userController, jwtMiddleware)
 	routes.TransactionRoutes(e, transactioNService, transactionController, jwtMiddleware)
+	routes.ImageRoutes(e, userController, jwtMiddleware)
 
 	e.Start(":8001")
 }
