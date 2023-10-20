@@ -164,7 +164,6 @@ func (c *depositController) Insert(context echo.Context) error {
 					}
 				}
 			}
-			response["va_account"] = ""
 			res := helper.BuildResponse(true, "Transaction inserted successfully!", response)
 			return context.JSON(http.StatusCreated, res)
 		} else {

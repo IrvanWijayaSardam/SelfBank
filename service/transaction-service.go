@@ -1,13 +1,16 @@
 package service
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
 
 	"github.com/IrvanWijayaSardam/SelfBank/dto"
 	"github.com/IrvanWijayaSardam/SelfBank/entity"
+	"github.com/IrvanWijayaSardam/SelfBank/helper"
 	"github.com/IrvanWijayaSardam/SelfBank/repository"
+	"github.com/jung-kurt/gofpdf"
 
 	"github.com/mashingan/smapping"
 )
@@ -21,6 +24,7 @@ type TransactionService interface {
 	TotalTransactionByUserID(idUser uint64) int64
 	UpdateTransactionStatus(orderID uint64, newStatus uint64) error
 	ValidateAccNumber(accNumber uint64) bool
+	GenerateTransactionPDF(Transactions []entity.Transaction) (*bytes.Buffer, error)
 }
 
 type transactionService struct {
@@ -90,4 +94,39 @@ func (service *transactionService) UpdateTransactionStatus(orderID uint64, newSt
 	}
 
 	return nil
+}
+
+func (service *transactionService) GenerateTransactionPDF(Transactions []entity.Transaction) (*bytes.Buffer, error) {
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+
+	pdf.SetFont("Arial", "B", 16)
+	pdf.Cell(190, 10, "Transaction Report")
+	pdf.Ln(10)
+
+	// Set table headers
+	pdf.SetFont("Arial", "B", 12)
+	pdf.CellFormat(40, 10, "Transaction ID", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(40, 10, "Amount", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(50, 10, "Date", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(60, 10, "Transaction To", "1", 1, "C", false, 0, "")
+
+	pdf.SetFont("Arial", "", 12)
+	for _, transaction := range Transactions {
+		pdf.CellFormat(40, 10, fmt.Sprintf("%d", transaction.ID), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(40, 10, helper.Uint64ToString(transaction.Amount), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(50, 10, transaction.Date.Format("2006-01-02 15:04:05"), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(60, 10, helper.Uint64ToString(transaction.TransactionTo), "1", 1, "C", false, 0, "")
+	}
+
+	// Create a buffer to store the PDF in memory
+	pdfBuffer := new(bytes.Buffer)
+
+	// Output the PDF to the buffer
+	err := pdf.Output(pdfBuffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return pdfBuffer, nil
 }

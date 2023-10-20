@@ -93,6 +93,7 @@ func (c *transactionController) Insert(context echo.Context) error {
 func (c *transactionController) All(context echo.Context) error {
 	pageParam := context.QueryParam("page")
 	pageSizeParam := context.QueryParam("pageSize")
+	exportTo := context.QueryParam("exportTo")
 
 	defaultPage := 1
 	defaultPageSize := 10
@@ -136,6 +137,26 @@ func (c *transactionController) All(context echo.Context) error {
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
+			if exportTo == "pdf" {
+				pdfBuffer, err := c.TransactionService.GenerateTransactionPDF(Transactions)
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to generate PDF")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
+
+				pdfFileName := "exported/transactions.pdf"
+
+				// Set the response headers to force download
+				context.Response().Header().Set("Content-Disposition", "attachment; filename="+pdfFileName)
+				context.Response().Header().Set("Content-Type", "application/pdf")
+
+				// Write the PDF from the buffer to the response writer
+				_, err = pdfBuffer.WriteTo(context.Response())
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to write PDF to response")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
+			}
 			total := c.TransactionService.TotalTransaction()
 
 			totalPages := (int(total) + pageSize - 1) / pageSize
@@ -164,6 +185,27 @@ func (c *transactionController) All(context echo.Context) error {
 			if err != nil {
 				response := helper.BuildErrorResponse("Failed to fetch data")
 				return context.JSON(http.StatusInternalServerError, response)
+			}
+
+			if exportTo == "pdf" {
+				pdfBuffer, err := c.TransactionService.GenerateTransactionPDF(Transactions)
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to generate PDF")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
+
+				pdfFileName := "exported/transactions.pdf"
+
+				// Set the response headers to force download
+				context.Response().Header().Set("Content-Disposition", "attachment; filename="+pdfFileName)
+				context.Response().Header().Set("Content-Type", "application/pdf")
+
+				// Write the PDF from the buffer to the response writer
+				_, err = pdfBuffer.WriteTo(context.Response())
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to write PDF to response")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
 			}
 
 			total := c.TransactionService.TotalTransactionByUserID(userIDCnv)
