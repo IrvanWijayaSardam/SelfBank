@@ -47,5 +47,5 @@ func main() {
 	routes.TransactionRoutes(e, transactioNService, transactionController, jwtMiddleware)
 	routes.ImageRoutes(e, userController, jwtMiddleware)
 
-	e.Start(":8001")
+	e.Start(":8000")
 }
