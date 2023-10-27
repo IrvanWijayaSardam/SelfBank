@@ -18,7 +18,7 @@ import (
 
 func TestAuthController_Login(t *testing.T) {
 	e := echo.New()
-	t.Run("Success Login", func(t *testing.T) {
+	t.Run("Success Login Test", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/auth/login", strings.NewReader(`{"email": "test@gmail.com", "password": "password123"}`))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
@@ -156,7 +156,7 @@ func TestAuthController_Register(t *testing.T) {
 			"08123456789",
 			"Laki-Laki",
 			uint64(2),
-			"123456789").Return("Valid Token", nil)
+			"123456789").Return("Valid Token", nil).Once()
 
 		err := controller.Register(c)
 
