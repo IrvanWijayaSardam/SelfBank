@@ -2,7 +2,8 @@ name: Docker Image CI
 
 on:
   push:
-    branches: "release"
+    branches:
+      - release
 
 jobs:
   build:
@@ -21,23 +22,51 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       -
+        name: Create .env File
+        run: |
+          echo "DB_HOST=${{ secrets.DB_HOST }}" > .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_PASS=${{ secrets.DB_PASS }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "BASE_URL=${{ secrets.BASE_URL }}" >> .env
+          echo "MT_SERVER_KEY=${{ secrets.MT_SERVER_KEY }}" >> .env
+          echo "MT_CLIENT_KEY=${{ secrets.MT_CLIENT_KEY }}" >> .env
+          echo "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}" >> .env
+          echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> .env
+          echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> .env
+          echo "CLOUDINARY_UPLOAD_FOLDER=${{ secrets.CLOUDINARY_UPLOAD_FOLDER }}" >> .env
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+          MT_SERVER_KEY: ${{ secrets.MT_SERVER_KEY }}
+          MT_CLIENT_KEY: ${{ secrets.MT_CLIENT_KEY }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          CLOUDINARY_UPLOAD_FOLDER: ${{ secrets.CLOUDINARY_UPLOAD_FOLDER }}
+      -
         name: Build and push
         uses: docker/build-push-action@v4
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/imgselfbank:latest #nama image
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/imgselfbank:latest
       -
-        name: connect ssh
+        name: Connect SSH
         uses: appleboy/ssh-action@v0.1.9
         with:
           host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }} 
+          username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
-          port:  ${{ secrets.PORT }} 
+          port: ${{ secrets.PORT }}
           script: |
-            docker stop ${{ secrets.CNAME }} 
-            docker rm ${{ secrets.CNAME }} 
+            docker stop ${{ secrets.CNAME }}
+            docker rm ${{ secrets.CNAME }}
             docker rmi -f ${{ secrets.DOCKERHUB_USERNAME }}/imgselfbank
-            docker run --name ${{ secrets.CNAME }} -p 8000:8000 -d -e DB_HOST=${{secrets.DB_HOST}} -e DB_USER=${{secrets.DB_USER}} -e DB_NAME=${{secrets.DB_NAME}} -e DB_PASS= -e JWT_SECRET=${{secrets.JWT_SECRET}} -e BASE_URL=${{secrets.BASE_URL}} -e MT_SERVER_KEY=${{secrets.MT_SERVER_KEY}} -e MT_CLIENT_KEY=${{secrets.MT_CLIENT_KEY}} -e CLOUDINARY_CLOUD_NAME=${{secrets.CLOUDINARY_CLOUD_NAME}} -e CLOUDINARY_API_KEY=${{secrets.CLOUDINARY_API_KEY}} -e CLOUDINARY_API_SECRET=${{secrets.CLOUDINARY_API_KEY}} -e CLOUDINARY_UPLOAD_FOLDER=${{secrets.CLOUDINARY_UPLOAD_FOLDER}} ${{secrets.DOCKERHUB_USERNAME }}/imgselfbank
+                        docker run --name ${{ secrets.CNAME }} -p 8000:8000 -d -e DB_HOST=${{secrets.DB_HOST}} -e DB_USER=${{secrets.DB_USER}} -e DB_NAME=${{secrets.DB_NAME}} -e DB_PASS= -e JWT_SECRET=${{secrets.JWT_SECRET}} -e BASE_URL=${{secrets.BASE_URL}} -e MT_SERVER_KEY=${{secrets.MT_SERVER_KEY}} -e MT_CLIENT_KEY=${{secrets.MT_CLIENT_KEY}} -e CLOUDINARY_CLOUD_NAME=${{secrets.CLOUDINARY_CLOUD_NAME}} -e CLOUDINARY_API_KEY=${{secrets.CLOUDINARY_API_KEY}} -e CLOUDINARY_API_SECRET=${{secrets.CLOUDINARY_API_KEY}} -e CLOUDINARY_UPLOAD_FOLDER=${{secrets.CLOUDINARY_UPLOAD_FOLDER}} ${{secrets.DOCKERHUB_USERNAME }}/imgselfbank
