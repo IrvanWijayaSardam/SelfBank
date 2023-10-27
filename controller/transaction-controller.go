@@ -144,7 +144,7 @@ func (c *transactionController) All(context echo.Context) error {
 					return context.JSON(http.StatusInternalServerError, response)
 				}
 
-				pdfFileName := "exported/transactions.pdf"
+				pdfFileName := "transactions.pdf"
 
 				// Set the response headers to force download
 				context.Response().Header().Set("Content-Disposition", "attachment; filename="+pdfFileName)

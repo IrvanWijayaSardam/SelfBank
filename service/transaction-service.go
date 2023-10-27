@@ -104,7 +104,6 @@ func (service *transactionService) GenerateTransactionPDF(Transactions []entity.
 	pdf.Cell(190, 10, "Transaction Report")
 	pdf.Ln(10)
 
-	// Set table headers
 	pdf.SetFont("Arial", "B", 12)
 	pdf.CellFormat(40, 10, "Transaction ID", "1", 0, "C", false, 0, "")
 	pdf.CellFormat(40, 10, "Amount", "1", 0, "C", false, 0, "")
@@ -119,10 +118,8 @@ func (service *transactionService) GenerateTransactionPDF(Transactions []entity.
 		pdf.CellFormat(60, 10, helper.Uint64ToString(transaction.TransactionTo), "1", 1, "C", false, 0, "")
 	}
 
-	// Create a buffer to store the PDF in memory
 	pdfBuffer := new(bytes.Buffer)
 
-	// Output the PDF to the buffer
 	err := pdf.Output(pdfBuffer)
 	if err != nil {
 		return nil, err

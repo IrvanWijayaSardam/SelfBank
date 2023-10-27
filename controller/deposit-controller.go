@@ -43,10 +43,10 @@ func NewDepositController(depositService service.DepositService, jwtService serv
 
 func (c *depositController) Insert(context echo.Context) error {
 	authHeader := context.Request().Header.Get("Authorization")
-	errEnv := godotenv.Load()
-	if errEnv != nil {
-		panic("Failed to load env file")
-	}
+	// errEnv := godotenv.Load()
+	// if errEnv != nil {
+	// 	panic("Failed to load env file")
+	// }
 
 	MT_SERVER_KEY := os.Getenv("MT_SERVER_KEY")
 	MT_CLIENT_KEY := os.Getenv("MT_CLIENT_KEY")
@@ -132,7 +132,6 @@ func (c *depositController) Insert(context echo.Context) error {
 			response["va_account"] = vaAccount
 			c.DepositService.InsertPaymentToken(Deposit.ID, chargeResp.TransactionID, vaAccount, "-")
 
-			// Respond with success message and the response data
 			res := helper.BuildResponse(true, "Deposit inserted successfully!", response)
 			return context.JSON(http.StatusCreated, res)
 		} else if DepositDTO.PaymentType == "10" {
