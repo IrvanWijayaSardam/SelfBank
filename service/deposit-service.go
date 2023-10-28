@@ -30,6 +30,7 @@ type DepositService interface {
 	TotalDepositByUserID(idUser uint64) int64
 	InsertPaymentToken(transactionID string, paymentToken string, virtualAcc string, callbackUrl string) error
 	UpdateDepositStatus(orderID string, newStatus uint64) error
+	FindPaymentInfoById(depositId string) *entity.PaymentToken
 }
 
 type depositService struct {
@@ -91,6 +92,10 @@ func (service *depositService) FindDepositByIDUser(idUser uint64, page int, page
 
 func (service *depositService) FindDepositByID(id string) *entity.Deposit {
 	return service.DepositRepository.FindDepositByID(id)
+}
+
+func (service *depositService) FindPaymentInfoById(id string) *entity.PaymentToken {
+	return service.DepositRepository.FindPaymentInfoById(id)
 }
 
 func (service *depositService) SaveFile(file *multipart.FileHeader) (string, error) {

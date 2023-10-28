@@ -18,6 +18,7 @@ type DepositRepository interface {
 	TotalDepositByUserID(idUser uint64) int64
 	StorePaymentToken(depositID string, paymentToken string, virtualAcc string, callbackUrl string) error
 	UpdateDepositStatus(id string, newStatus uint64) error
+	FindPaymentInfoById(id string) *entity.PaymentToken
 }
 
 type DepositConnection struct {
@@ -26,7 +27,7 @@ type DepositConnection struct {
 
 func (db *DepositConnection) TotalDeposit() int64 {
 	var count int64
-	result := db.connection.Model(&entity.Deposit{}).Where("status = ?", 5).Count(&count)
+	result := db.connection.Model(&entity.Deposit{}).Where("status != ?", 1).Count(&count)
 	if result.Error != nil {
 		return 0
 	}
@@ -75,7 +76,7 @@ func (db *DepositConnection) All(page int, pageSize int) ([]entity.Deposit, erro
 	var transactions []entity.Deposit
 	offset := (page - 1) * pageSize
 
-	result := db.connection.Where("status = ?", 5).Offset(offset).Limit(pageSize).Find(&transactions)
+	result := db.connection.Where("status != ?", 1).Offset(offset).Limit(pageSize).Find(&transactions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -91,7 +92,7 @@ func (db *DepositConnection) FindDepositByIDUser(idUser uint64, page int, pageSi
 	var transactions []entity.Deposit
 	offset := (page - 1) * pageSize
 
-	result := db.connection.Where("id_user = ? && status = ?", idUser, 5).Offset(offset).Limit(pageSize).Find(&transactions)
+	result := db.connection.Where("id_user = ? && status != ?", idUser, 1).Offset(offset).Limit(pageSize).Find(&transactions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -112,6 +113,16 @@ func (db *DepositConnection) FindDepositByID(id string) *entity.Deposit {
 	}
 
 	return &Deposit
+}
+
+func (db *DepositConnection) FindPaymentInfoById(id string) *entity.PaymentToken {
+	var payment entity.PaymentToken
+	result := db.connection.Where("deposit_id = ? ", id).Take(&payment)
+	if result.Error != nil || result.RowsAffected == 0 {
+		return nil
+	}
+
+	return &payment
 }
 
 func (db *DepositConnection) UpdateDepositStatus(id string, newStatus uint64) error {

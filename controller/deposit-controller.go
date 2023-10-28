@@ -13,7 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/IrvanWijayaSardam/SelfBank/dto"
-	"github.com/IrvanWijayaSardam/SelfBank/entity"
 	"github.com/IrvanWijayaSardam/SelfBank/helper"
 	"github.com/IrvanWijayaSardam/SelfBank/service"
 
@@ -221,6 +220,38 @@ func (c *depositController) All(context echo.Context) error {
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
+			var depositResponses []dto.DepositResponse
+
+			for _, deposit := range Deposits {
+				status := ""
+				switch deposit.Status {
+				case 1:
+					status = "Created"
+				case 2:
+					status = "Pending"
+				case 3:
+					status = "Cancelled"
+				case 4:
+					status = "Denied"
+				case 5:
+					status = "Paid"
+				default:
+					status = "Created"
+				}
+
+				paymentInfo := c.DepositService.FindPaymentInfoById(deposit.ID)
+
+				depositResponse := dto.DepositResponse{
+					Id_deposit:      deposit.ID,
+					Id_user:         deposit.ID_User,
+					Virtual_account: paymentInfo.VirtualAcc,
+					Url_callback:    paymentInfo.CallbackUrl,
+					Amount:          deposit.Amount,
+					Status:          status,
+				}
+				depositResponses = append(depositResponses, depositResponse)
+			}
+
 			total := c.DepositService.TotalDeposit()
 
 			totalPages := (int(total) + pageSize - 1) / pageSize
@@ -228,12 +259,12 @@ func (c *depositController) All(context echo.Context) error {
 			customResponse := struct {
 				Status  bool                      `json:"status"`
 				Message string                    `json:"message"`
-				Data    []entity.Deposit          `json:"data"`
+				Data    []dto.DepositResponse     `json:"data"`
 				Paging  helper.PaginationResponse `json:"paging"`
 			}{
 				Status:  true,
 				Message: "OK!",
-				Data:    Deposits,
+				Data:    depositResponses,
 				Paging:  helper.PaginationResponse{TotalRecords: int(total), CurrentPage: page, TotalPages: totalPages},
 			}
 
@@ -248,7 +279,37 @@ func (c *depositController) All(context echo.Context) error {
 				response := helper.BuildErrorResponse("Failed to fetch data")
 				return context.JSON(http.StatusInternalServerError, response)
 			}
+			var depositResponses []dto.DepositResponse
 
+			for _, deposit := range Deposits {
+				status := ""
+				switch deposit.Status {
+				case 1:
+					status = "Created"
+				case 2:
+					status = "Pending"
+				case 3:
+					status = "Cancelled"
+				case 4:
+					status = "Denied"
+				case 5:
+					status = "Paid"
+				default:
+					status = "Created"
+				}
+
+				paymentInfo := c.DepositService.FindPaymentInfoById(deposit.ID)
+
+				depositResponse := dto.DepositResponse{
+					Id_deposit:      deposit.ID,
+					Id_user:         deposit.ID_User,
+					Virtual_account: paymentInfo.VirtualAcc,
+					Url_callback:    paymentInfo.CallbackUrl,
+					Amount:          deposit.Amount,
+					Status:          status,
+				}
+				depositResponses = append(depositResponses, depositResponse)
+			}
 			total := c.DepositService.TotalDepositByUserID(userIDCnv)
 
 			totalPages := (int(total) + pageSize - 1) / pageSize
@@ -256,12 +317,12 @@ func (c *depositController) All(context echo.Context) error {
 			customResponse := struct {
 				Status  bool                      `json:"status"`
 				Message string                    `json:"message"`
-				Data    []entity.Deposit          `json:"data"`
+				Data    []dto.DepositResponse     `json:"data"`
 				Paging  helper.PaginationResponse `json:"paging"`
 			}{
 				Status:  true,
 				Message: "OK!",
-				Data:    Deposits,
+				Data:    depositResponses,
 				Paging:  helper.PaginationResponse{TotalRecords: int(total), CurrentPage: page, TotalPages: totalPages},
 			}
 
@@ -337,7 +398,35 @@ func (c *depositController) FindDepositByID(context echo.Context) error {
 	id := context.Param("id")
 
 	Deposit := c.DepositService.FindDepositByID(id)
-	response := helper.BuildResponse(true, "OK!", Deposit)
+
+	status := ""
+	switch Deposit.Status {
+	case 1:
+		status = "Created"
+	case 2:
+		status = "Pending"
+	case 3:
+		status = "Cancelled"
+	case 4:
+		status = "Denied"
+	case 5:
+		status = "Paid"
+	default:
+		status = "Created"
+	}
+
+	paymentInfo := c.DepositService.FindPaymentInfoById(Deposit.ID)
+
+	depositResponse := dto.DepositResponse{
+		Id_deposit:      Deposit.ID,
+		Id_user:         Deposit.ID_User,
+		Virtual_account: paymentInfo.VirtualAcc,
+		Url_callback:    paymentInfo.CallbackUrl,
+		Amount:          Deposit.Amount,
+		Status:          status,
+	}
+
+	response := helper.BuildResponse(true, "OK!", depositResponse)
 	return context.JSON(http.StatusOK, response)
 }
 
