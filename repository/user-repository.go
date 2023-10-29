@@ -20,7 +20,8 @@ type UserRepository interface {
 	ProfileUser(userId uint64) entity.User
 	TotalDepositByUserID(userId uint64) int64
 	TotalWithdrawalByUserID(userid uint64) int64
-	TotalTransactionByAccountNumber(accountNumber string) int64
+	TotalTransactionInByAccountNumber(accountNumber string) int64
+	TotalTransactionFromByAccountNumber(accountNumber string) int64
 }
 
 type userConnection struct {
@@ -103,9 +104,18 @@ func (db *userConnection) TotalWithdrawalByUserID(idUser uint64) int64 {
 	return totalAmount
 }
 
-func (db *userConnection) TotalTransactionByAccountNumber(accountNumber string) int64 {
+func (db *userConnection) TotalTransactionInByAccountNumber(accountNumber string) int64 {
 	var totalAmount int64
 	result := db.connection.Model(&entity.Transaction{}).Select("SUM(amount)").Where("transaction_to = ? && status = ?", accountNumber, 1).Scan(&totalAmount)
+	if result.Error != nil {
+		return 0
+	}
+	return totalAmount
+}
+
+func (db *userConnection) TotalTransactionFromByAccountNumber(accountNumber string) int64 {
+	var totalAmount int64
+	result := db.connection.Model(&entity.Transaction{}).Select("SUM(amount)").Where("transaction_from = ? && status = ?", accountNumber, 1).Scan(&totalAmount)
 	if result.Error != nil {
 		return 0
 	}

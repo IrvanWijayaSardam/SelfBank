@@ -36,8 +36,9 @@ func (service *userService) GetSaldo(id uint64) int64 {
 
 	totalDeposit := service.userRepository.TotalDepositByUserID(id)
 	totalWithdrawal := service.userRepository.TotalWithdrawalByUserID(id)
-	totalTransactionIn := service.userRepository.TotalTransactionByAccountNumber(strconv.Itoa(int(user.AccountNumber)))
-	balance := (totalDeposit + totalTransactionIn) - totalWithdrawal
+	totalTransactionIn := service.userRepository.TotalTransactionInByAccountNumber(strconv.Itoa(int(user.AccountNumber)))
+	totalTransactionOut := service.userRepository.TotalTransactionFromByAccountNumber(strconv.Itoa(int(user.AccountNumber)))
+	balance := (totalDeposit + totalTransactionIn) - totalWithdrawal - totalTransactionOut
 
 	return balance
 }
