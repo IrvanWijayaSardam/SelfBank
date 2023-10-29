@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"github.com/IrvanWijayaSardam/SelfBank/entity"
 	"github.com/IrvanWijayaSardam/SelfBank/helper"
 	"github.com/IrvanWijayaSardam/SelfBank/repository"
+	"github.com/jung-kurt/gofpdf"
 	"github.com/midtrans/midtrans-go"
 
 	"github.com/google/uuid"
@@ -31,6 +33,7 @@ type DepositService interface {
 	InsertPaymentToken(transactionID string, paymentToken string, virtualAcc string, callbackUrl string) error
 	UpdateDepositStatus(orderID string, newStatus uint64) error
 	FindPaymentInfoById(depositId string) *entity.PaymentToken
+	GenerateDepositPDF(deposits []dto.DepositResponse) (*bytes.Buffer, error)
 }
 
 type depositService struct {
@@ -147,4 +150,42 @@ func (service *depositService) UpdateDepositStatus(orderID string, newStatus uin
 	}
 
 	return nil
+}
+
+func (service *depositService) GenerateDepositPDF(Deposits []dto.DepositResponse) (*bytes.Buffer, error) {
+	pdf := gofpdf.New("L", "mm", "A2", "")
+	pdf.AddPage()
+
+	pdf.SetFont("Arial", "B", 16)
+	pdf.Cell(0, 10, "Deposit Report")
+	pdf.Ln(10)
+
+	pdf.SetFont("Arial", "B", 12)
+	pdf.CellFormat(40, 10, "Deposit ID", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(40, 10, "ID User", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(40, 10, "Date", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(60, 10, "Amount", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(60, 10, "Status", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(50, 10, "Virtual Account", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(220, 10, "URL Callback", "1", 1, "C", false, 0, "")
+
+	pdf.SetFont("Arial", "", 12)
+	for _, deposit := range Deposits {
+		pdf.CellFormat(40, 10, deposit.Id_deposit, "1", 0, "C", false, 0, "")
+		pdf.CellFormat(40, 10, helper.Uint64ToString(deposit.Id_user), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(40, 10, deposit.Date.Format("2006-01-02 15:04:05"), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(60, 10, helper.Uint64ToString(deposit.Amount), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(60, 10, deposit.Status, "1", 0, "C", false, 0, "")
+		pdf.CellFormat(50, 10, deposit.Virtual_account, "1", 0, "C", false, 0, "")
+		pdf.CellFormat(220, 10, deposit.Url_callback, "1", 1, "C", false, 0, "")
+	}
+
+	pdfBuffer := new(bytes.Buffer)
+
+	err := pdf.Output(pdfBuffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return pdfBuffer, nil
 }

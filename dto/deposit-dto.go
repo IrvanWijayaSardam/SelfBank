@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 type DepositDTO struct {
 	ID_User     uint64 `json:"id_user" form:"id_user"`
 	Amount      uint64 `json:"amount" form:"amount" binding:"required"`
@@ -8,10 +10,11 @@ type DepositDTO struct {
 }
 
 type DepositResponse struct {
-	Id_deposit      string `json:"id_deposit" form:"id_deposit"`
-	Id_user         uint64 `json:"id_user" form:"id_user"`
-	Virtual_account string `json:"virtual_account" form:"virtual_account"`
-	Url_callback    string `json:"url_callback" form:"virtual_account"`
-	Amount          uint64 `json:"amount" form:"amount"`
-	Status          string `json:"status" form:"status"`
+	Id_deposit      string    `json:"id_deposit" form:"id_deposit"`
+	Date            time.Time `json:"date" form:"date"`
+	Id_user         uint64    `json:"id_user" form:"id_user"`
+	Virtual_account string    `json:"virtual_account" form:"virtual_account"`
+	Url_callback    string    `json:"url_callback" form:"virtual_account"`
+	Amount          uint64    `json:"amount" form:"amount"`
+	Status          string    `json:"status" form:"status"`
 }

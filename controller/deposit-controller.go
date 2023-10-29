@@ -177,6 +177,7 @@ func (c *depositController) Insert(context echo.Context) error {
 func (c *depositController) All(context echo.Context) error {
 	pageParam := context.QueryParam("page")
 	pageSizeParam := context.QueryParam("pageSize")
+	exportTo := context.QueryParam("exportTo")
 
 	defaultPage := 1
 	defaultPageSize := 10
@@ -248,8 +249,29 @@ func (c *depositController) All(context echo.Context) error {
 					Url_callback:    paymentInfo.CallbackUrl,
 					Amount:          deposit.Amount,
 					Status:          status,
+					Date:            deposit.Date,
 				}
 				depositResponses = append(depositResponses, depositResponse)
+			}
+			if exportTo == "pdf" {
+				pdfBuffer, err := c.DepositService.GenerateDepositPDF(depositResponses)
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to generate PDF")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
+
+				pdfFileName := "transactions.pdf"
+
+				// Set the response headers to force download
+				context.Response().Header().Set("Content-Disposition", "attachment; filename="+pdfFileName)
+				context.Response().Header().Set("Content-Type", "application/pdf")
+
+				// Write the PDF from the buffer to the response writer
+				_, err = pdfBuffer.WriteTo(context.Response())
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to write PDF to response")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
 			}
 
 			total := c.DepositService.TotalDeposit()
@@ -307,8 +329,30 @@ func (c *depositController) All(context echo.Context) error {
 					Url_callback:    paymentInfo.CallbackUrl,
 					Amount:          deposit.Amount,
 					Status:          status,
+					Date:            deposit.Date,
 				}
 				depositResponses = append(depositResponses, depositResponse)
+			}
+
+			if exportTo == "pdf" {
+				pdfBuffer, err := c.DepositService.GenerateDepositPDF(depositResponses)
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to generate PDF")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
+
+				pdfFileName := "transactions.pdf"
+
+				// Set the response headers to force download
+				context.Response().Header().Set("Content-Disposition", "attachment; filename="+pdfFileName)
+				context.Response().Header().Set("Content-Type", "application/pdf")
+
+				// Write the PDF from the buffer to the response writer
+				_, err = pdfBuffer.WriteTo(context.Response())
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to write PDF to response")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
 			}
 			total := c.DepositService.TotalDepositByUserID(userIDCnv)
 
