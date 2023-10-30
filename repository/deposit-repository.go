@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"time"
 
 	"github.com/IrvanWijayaSardam/SelfBank/entity"
 
@@ -50,6 +51,7 @@ func NewDepositRepository(db *gorm.DB) DepositRepository {
 }
 
 func (db *DepositConnection) InsertDeposit(Deposit *entity.Deposit) entity.Deposit {
+	Deposit.Date = time.Now()
 	db.connection.Save(Deposit)
 	return *Deposit
 }
