@@ -79,6 +79,8 @@ func (c *withdrawalController) Insert(context echo.Context) error {
 func (c *withdrawalController) All(context echo.Context) error {
 	pageParam := context.QueryParam("page")
 	pageSizeParam := context.QueryParam("pageSize")
+	exportTo := context.QueryParam("exportTo")
+
 	var withdrawalResponse []dto.WithdrawalResponseDTO
 
 	defaultPage := 1
@@ -135,6 +137,27 @@ func (c *withdrawalController) All(context echo.Context) error {
 				withdrawalResponse = append(withdrawalResponse, response)
 			}
 
+			if exportTo == "pdf" {
+				pdfBuffer, err := c.WithdrawalService.GenerateWithdrawalPDF(Withdrawals)
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to generate PDF")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
+
+				pdfFileName := "transactions.pdf"
+
+				// Set the response headers to force download
+				context.Response().Header().Set("Content-Disposition", "attachment; filename="+pdfFileName)
+				context.Response().Header().Set("Content-Type", "application/pdf")
+
+				// Write the PDF from the buffer to the response writer
+				_, err = pdfBuffer.WriteTo(context.Response())
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to write PDF to response")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
+			}
+
 			total := c.WithdrawalService.TotalWithdrawal()
 
 			totalPages := (int(total) + pageSize - 1) / pageSize
@@ -174,6 +197,27 @@ func (c *withdrawalController) All(context echo.Context) error {
 				withdrawalResponse = append(withdrawalResponse, response)
 			}
 
+			if exportTo == "pdf" {
+				pdfBuffer, err := c.WithdrawalService.GenerateWithdrawalPDF(Withdrawals)
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to generate PDF")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
+
+				pdfFileName := "transactions.pdf"
+
+				// Set the response headers to force download
+				context.Response().Header().Set("Content-Disposition", "attachment; filename="+pdfFileName)
+				context.Response().Header().Set("Content-Type", "application/pdf")
+
+				// Write the PDF from the buffer to the response writer
+				_, err = pdfBuffer.WriteTo(context.Response())
+				if err != nil {
+					response := helper.BuildErrorResponse("Failed to write PDF to response")
+					return context.JSON(http.StatusInternalServerError, response)
+				}
+			}
+
 			total := c.WithdrawalService.TotalWithdrawalByUserID(userIDCnv)
 
 			totalPages := (int(total) + pageSize - 1) / pageSize
@@ -209,6 +253,20 @@ func (c *withdrawalController) FindWithdrawalByID(context echo.Context) error {
 	}
 
 	Withdrawal := c.WithdrawalService.FindWithdrawalByID(orderIDUint)
-	response := helper.BuildResponse(true, "OK!", Withdrawal)
-	return context.JSON(http.StatusOK, response)
+	if Withdrawal.ID == 0 {
+		res := helper.BuildErrorResponse("Withdrawal not found")
+		return context.JSON(http.StatusNotFound, res)
+	} else {
+		var data = dto.WithdrawalResponseDTO{
+			ID:     Withdrawal.ID,
+			IDUser: Withdrawal.ID_User,
+			Date:   helper.ConvertUnixtime(Withdrawal.Date).Format("2006-01-02 15:04:05"),
+			Amount: Withdrawal.Amount,
+			To:     Withdrawal.To,
+			Status: Withdrawal.Status,
+		}
+
+		response := helper.BuildResponse(true, "OK!", data)
+		return context.JSON(http.StatusOK, response)
+	}
 }

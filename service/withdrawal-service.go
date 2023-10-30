@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -11,7 +12,9 @@ import (
 
 	"github.com/IrvanWijayaSardam/SelfBank/dto"
 	"github.com/IrvanWijayaSardam/SelfBank/entity"
+	"github.com/IrvanWijayaSardam/SelfBank/helper"
 	"github.com/IrvanWijayaSardam/SelfBank/repository"
+	"github.com/jung-kurt/gofpdf"
 
 	"github.com/google/uuid"
 	"github.com/mashingan/smapping"
@@ -26,6 +29,7 @@ type WithdrawalService interface {
 	TotalWithdrawal() int64
 	TotalWithdrawalByUserID(idUser uint64) int64
 	UpdateWithdrawalStatus(orderID uint64, newStatus uint64) error
+	GenerateWithdrawalPDF(Transactions []entity.Withdrawal) (*bytes.Buffer, error)
 }
 
 type withdrawalService struct {
@@ -125,4 +129,38 @@ func (service *withdrawalService) UpdateWithdrawalStatus(orderID uint64, newStat
 	}
 
 	return nil
+}
+
+func (service *withdrawalService) GenerateWithdrawalPDF(Transactions []entity.Withdrawal) (*bytes.Buffer, error) {
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+
+	pdf.SetFont("Arial", "B", 16)
+	pdf.Cell(190, 10, "Withdrawal Report")
+	pdf.Ln(10)
+
+	pdf.SetFont("Arial", "B", 12)
+	pdf.CellFormat(40, 10, "Withdrawal ID", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(40, 10, "ID User", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(50, 10, "Date", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(40, 10, "Amount", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(60, 10, "Transaction To", "1", 1, "C", false, 0, "")
+
+	pdf.SetFont("Arial", "", 12)
+	for _, transaction := range Transactions {
+		pdf.CellFormat(40, 10, fmt.Sprintf("%d", transaction.ID), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprintf("%d", transaction.ID_User), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(50, 10, helper.ConvertUnixtime(transaction.Date).Format("2006-01-02 15:04:05"), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(40, 10, helper.Uint64ToString(transaction.Amount), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(60, 10, transaction.To, "1", 1, "C", false, 0, "")
+	}
+
+	pdfBuffer := new(bytes.Buffer)
+
+	err := pdf.Output(pdfBuffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return pdfBuffer, nil
 }
