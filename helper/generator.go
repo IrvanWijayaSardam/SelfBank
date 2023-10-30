@@ -18,3 +18,14 @@ func GenerateTrxId() uint64 {
 	max := 9999999999 // 7-digit maximum number
 	return uint64(min + rand.Intn(max-min+1))
 }
+
+func GetCurrentTimeInLocation() time.Time {
+	loc, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		return time.Time{}
+	}
+
+	currentTime := time.Now().In(loc)
+
+	return currentTime
+}
