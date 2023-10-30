@@ -8,51 +8,63 @@ import (
 )
 
 func RegisterRoutes(e *echo.Echo, jwtService service.JWTService, authController controller.AuthController) {
-	authRoutes := e.Group("/api/auth")
+	registerRoutes := e.Group("/api/auth")
 
-	authRoutes.POST("/login", authController.Login)
-	authRoutes.POST("/register", authController.Register)
+	registerRoutes.POST("/login", authController.Login)
+	registerRoutes.POST("/register", authController.Register)
 }
 
 func DepositRoutes(e *echo.Echo, depositService service.DepositService,
 	depositController controller.DepositController, jwtMiddleware echo.MiddlewareFunc) {
-	authRoutes := e.Group("/api/deposit")
+	depositRoutes := e.Group("/api/deposit")
 
-	authRoutes.Use(jwtMiddleware)
-	authRoutes.POST("/", depositController.Insert)
-	authRoutes.GET("/", depositController.All)
-	authRoutes.GET("/:id", depositController.FindDepositByID)
+	depositRoutes.Use(jwtMiddleware)
+	depositRoutes.POST("/", depositController.Insert)
+	depositRoutes.GET("/", depositController.All)
+	depositRoutes.GET("/:id", depositController.FindDepositByID)
 
 }
 
 func WithdrawalRoutes(e *echo.Echo, withdrawalService service.WithdrawalService,
 	withdrawalController controller.WithdrawalController, jwtMiddleware echo.MiddlewareFunc) {
-	authRoutes := e.Group("/api/withdrawal")
+	withdrawalRoutes := e.Group("/api/withdrawal")
 
-	authRoutes.Use(jwtMiddleware)
+	withdrawalRoutes.Use(jwtMiddleware)
 
-	authRoutes.POST("/", withdrawalController.Insert)
-	authRoutes.GET("/", withdrawalController.All)
-	authRoutes.GET("/:id", withdrawalController.FindWithdrawalByID)
+	withdrawalRoutes.POST("/", withdrawalController.Insert)
+	withdrawalRoutes.GET("/", withdrawalController.All)
+	withdrawalRoutes.GET("/:id", withdrawalController.FindWithdrawalByID)
 
 }
 
 func TransactionRoutes(e *echo.Echo, transactionService service.TransactionService,
 	transactionController controller.TransactionController, jwtMiddleware echo.MiddlewareFunc) {
-	authRoutes := e.Group("/api/transaction")
+	trxRoutes := e.Group("/api/transaction")
 
-	authRoutes.Use(jwtMiddleware)
+	trxRoutes.Use(jwtMiddleware)
 
-	authRoutes.POST("/", transactionController.Insert)
-	authRoutes.GET("/", transactionController.All)
-	authRoutes.GET("/:id", transactionController.FindTransactionByID)
+	trxRoutes.POST("/", transactionController.Insert)
+	trxRoutes.GET("/", transactionController.All)
+	trxRoutes.GET("/:id", transactionController.FindTransactionByID)
+}
+
+func ProfileRoutes(e *echo.Echo, userService service.UserService,
+	userController controller.UserController, jwtMiddleware echo.MiddlewareFunc) {
+	profileRoutes := e.Group("/api/profile")
+
+	profileRoutes.GET("/", userController.MyProfile)
+	profileRoutes.PUT("/", userController.UpdateProfile)
+	profileRoutes.DELETE("/:id", userController.DeleteUser)
+
 }
 
 func UserRoutes(e *echo.Echo, userService service.UserService,
 	userController controller.UserController, jwtMiddleware echo.MiddlewareFunc) {
-	authRoutes := e.Group("/api/user")
+	profileRoutes := e.Group("/api/user")
 
-	authRoutes.GET("/", userController.MyProfile)
+	profileRoutes.GET("/", userController.All)
+	profileRoutes.PUT("/", userController.UpdateProfile)
+	profileRoutes.DELETE("/:id", userController.DeleteUser)
 
 }
 

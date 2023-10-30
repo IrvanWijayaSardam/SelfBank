@@ -175,6 +175,7 @@ func (c *depositController) Insert(context echo.Context) error {
 }
 
 func (c *depositController) All(context echo.Context) error {
+	authHeader := context.Request().Header.Get("Authorization")
 	pageParam := context.QueryParam("page")
 	pageSizeParam := context.QueryParam("pageSize")
 	exportTo := context.QueryParam("exportTo")
@@ -191,7 +192,6 @@ func (c *depositController) All(context echo.Context) error {
 	if err != nil || pageSize < 1 {
 		pageSize = defaultPageSize
 	}
-	authHeader := context.Request().Header.Get("Authorization")
 
 	token, err := c.jwtService.ValidateToken(authHeader)
 	if err != nil {

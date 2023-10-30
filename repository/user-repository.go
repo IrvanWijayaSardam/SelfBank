@@ -1,19 +1,19 @@
 package repository
 
 import (
-	"log"
+	"errors"
 
 	"github.com/IrvanWijayaSardam/SelfBank/entity"
 	"github.com/IrvanWijayaSardam/SelfBank/helper"
 
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type UserRepository interface {
-	All() []entity.User
+	All(page int, pageSize int) ([]entity.User, error)
 	InsertUser(user entity.User) entity.User
 	UpdateUser(user entity.User) entity.User
+	DeleteUser(idUser uint64) bool
 	VerifyCredential(email string, password string) interface{}
 	IsDuplicateEmail(email string) (tx *gorm.DB)
 	FindByEmail(email string) entity.User
@@ -34,14 +34,24 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	}
 }
 
-func (db *userConnection) All() []entity.User {
-	var users []entity.User
-	db.connection.Where("status = ?", 1).Find(&users)
-	return users
+func (db *userConnection) All(page int, pageSize int) ([]entity.User, error) {
+	if page <= 0 || pageSize <= 0 {
+		return nil, errors.New("Invalid page or pageSize values")
+	}
+
+	var transactions []entity.User
+	offset := (page - 1) * pageSize
+
+	result := db.connection.Where("status = ?", 1).Offset(offset).Limit(pageSize).Find(&transactions)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return transactions, nil
 }
 
 func (db *userConnection) InsertUser(user entity.User) entity.User {
-	user.Password = hashAndSalt([]byte(user.Password))
+	user.Password = helper.HashAndSalt([]byte(user.Password))
 	user.AccountNumber = helper.GenerateRandomAccountNumber()
 	db.connection.Save(&user)
 	return user
@@ -50,6 +60,18 @@ func (db *userConnection) InsertUser(user entity.User) entity.User {
 func (db *userConnection) UpdateUser(user entity.User) entity.User {
 	db.connection.Save(&user)
 	return user
+}
+
+func (db *userConnection) DeleteUser(idUser uint64) bool {
+	var user entity.User
+	db.connection.Where("id = ?", idUser).Take(&user)
+	user.Status = 2
+	result := db.connection.Save(&user)
+
+	if result.RowsAffected == 1 {
+		return true
+	}
+	return false
 }
 
 func (db *userConnection) VerifyCredential(email string, password string) interface{} {
@@ -112,13 +134,4 @@ func (db *userConnection) TotalTransactionFromByAccountNumber(accountNumber stri
 		return 0
 	}
 	return totalAmount
-}
-
-func hashAndSalt(pwd []byte) string {
-	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
-	if err != nil {
-		log.Println(err)
-		panic("Failed to hash a password")
-	}
-	return string(hash)
 }

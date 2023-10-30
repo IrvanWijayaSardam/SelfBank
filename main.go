@@ -44,6 +44,7 @@ func main() {
 	routes.MidtransRoutes(e, depositService, depositController, jwtMiddleware)
 	routes.WithdrawalRoutes(e, withdrawalService, withdrawalController, jwtMiddleware)
 	routes.UserRoutes(e, userService, userController, jwtMiddleware)
+	routes.ProfileRoutes(e, userService, userController, jwtMiddleware)
 	routes.TransactionRoutes(e, transactioNService, transactionController, jwtMiddleware)
 	routes.ImageRoutes(e, userController, jwtMiddleware)
 

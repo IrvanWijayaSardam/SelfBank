@@ -6,6 +6,11 @@ type Response struct {
 	Data    interface{} `json:"data"`
 }
 
+type ResponseOK struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+}
+
 type ResponseError struct {
 	Status  bool   `json:"status"`
 	Message string `json:"message"`
@@ -28,6 +33,14 @@ func BuildResponse(status bool, message string, data interface{}) Response {
 		Status:  status,
 		Message: message,
 		Data:    data,
+	}
+	return res
+}
+
+func BuildOkResponse(status bool, message string) ResponseOK {
+	res := ResponseOK{
+		Status:  status,
+		Message: message,
 	}
 	return res
 }
