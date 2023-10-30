@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/IrvanWijayaSardam/SelfBank/entity"
+	"github.com/IrvanWijayaSardam/SelfBank/helper"
 
 	"gorm.io/gorm"
 )
@@ -48,6 +49,7 @@ func NewWithdrawalRepository(db *gorm.DB) WithdrawalRepository {
 }
 
 func (db *WithdrawalConnection) InsertWithdrawal(Withdrawal *entity.Withdrawal) entity.Withdrawal {
+	Withdrawal.Date = helper.GetCurrentTimeInLocation()
 	db.connection.Save(Withdrawal)
 	return *Withdrawal
 }

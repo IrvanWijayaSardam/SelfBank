@@ -26,7 +26,7 @@ type DepositService interface {
 	InsertDeposit(Deposit dto.DepositDTO) entity.Deposit
 	All(page int, pageSize int) ([]entity.Deposit, error)
 	FindDepositByIDUser(idUser uint64, int, pageSize int) ([]entity.Deposit, error)
-	FindDepositByID(id string) *entity.Deposit
+	FindDepositByID(id string) entity.Deposit
 	SaveFile(file *multipart.FileHeader) (string, error)
 	TotalDeposit() int64
 	TotalDepositByUserID(idUser uint64) int64
@@ -54,6 +54,7 @@ func (service *depositService) InsertDeposit(b dto.DepositDTO) entity.Deposit {
 	}
 	numInt := int(helper.GenerateTrxId())
 	Deposit.ID = strconv.Itoa(numInt)
+	Deposit.Date = helper.GetCurrentTimeInLocation()
 	res := service.DepositRepository.InsertDeposit(&Deposit)
 	return res
 }
@@ -93,7 +94,7 @@ func (service *depositService) FindDepositByIDUser(idUser uint64, page int, page
 	return service.DepositRepository.FindDepositByIDUser(idUser, page, pageSize)
 }
 
-func (service *depositService) FindDepositByID(id string) *entity.Deposit {
+func (service *depositService) FindDepositByID(id string) entity.Deposit {
 	return service.DepositRepository.FindDepositByID(id)
 }
 
@@ -173,7 +174,7 @@ func (service *depositService) GenerateDepositPDF(Deposits []dto.DepositResponse
 	for _, deposit := range Deposits {
 		pdf.CellFormat(40, 10, deposit.Id_deposit, "1", 0, "C", false, 0, "")
 		pdf.CellFormat(40, 10, helper.Uint64ToString(deposit.Id_user), "1", 0, "C", false, 0, "")
-		pdf.CellFormat(40, 10, deposit.Date.Format("2006-01-02 15:04:05"), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(40, 10, deposit.Date, "1", 0, "C", false, 0, "")
 		pdf.CellFormat(60, 10, helper.Uint64ToString(deposit.Amount), "1", 0, "C", false, 0, "")
 		pdf.CellFormat(60, 10, deposit.Status, "1", 0, "C", false, 0, "")
 		pdf.CellFormat(50, 10, deposit.Virtual_account, "1", 0, "C", false, 0, "")

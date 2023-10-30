@@ -19,13 +19,15 @@ func GenerateTrxId() uint64 {
 	return uint64(min + rand.Intn(max-min+1))
 }
 
-func GetCurrentTimeInLocation() time.Time {
-	loc, err := time.LoadLocation("Asia/Jakarta")
-	if err != nil {
-		return time.Time{}
-	}
+func GetCurrentTimeInLocation() int64 {
+	currentTime := time.Now()
+	currentTimestamp := currentTime.Unix()
+	return currentTimestamp
+}
 
-	currentTime := time.Now().In(loc)
+func ConvertUnixtime(epoch int64) time.Time {
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	date := time.Unix(epoch, 0).In(loc)
 
-	return currentTime
+	return date
 }

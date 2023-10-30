@@ -19,7 +19,7 @@ type TransactionService interface {
 	InsertTransaction(Transaction dto.TransactionDTO) entity.Transaction
 	All(page int, pageSize int) ([]entity.Transaction, error)
 	FindTransactionByIDUser(idUiser uint64, int, pageSize int) ([]entity.Transaction, error)
-	FindTransactionByID(id uint64) *entity.Transaction
+	FindTransactionByID(id uint64) entity.Transaction
 	TotalTransaction() int64
 	TotalTransactionByUserID(idUser uint64) int64
 	UpdateTransactionStatus(orderID uint64, newStatus uint64) error
@@ -75,7 +75,7 @@ func (service *transactionService) FindTransactionByIDUser(idUser uint64, page i
 	return service.TransactionRepository.FindTransactionByIDUser(idUser, page, pageSize)
 }
 
-func (service *transactionService) FindTransactionByID(id uint64) *entity.Transaction {
+func (service *transactionService) FindTransactionByID(id uint64) entity.Transaction {
 	return service.TransactionRepository.FindTransactionByID(id)
 }
 
@@ -114,7 +114,7 @@ func (service *transactionService) GenerateTransactionPDF(Transactions []entity.
 	for _, transaction := range Transactions {
 		pdf.CellFormat(40, 10, fmt.Sprintf("%d", transaction.ID), "1", 0, "C", false, 0, "")
 		pdf.CellFormat(40, 10, helper.Uint64ToString(transaction.Amount), "1", 0, "C", false, 0, "")
-		pdf.CellFormat(50, 10, transaction.Date.Format("2006-01-02 15:04:05"), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(50, 10, helper.ConvertUnixtime(transaction.Date).Format("2006-01-02 15:04:05"), "1", 0, "C", false, 0, "")
 		pdf.CellFormat(60, 10, helper.Uint64ToString(transaction.TransactionTo), "1", 1, "C", false, 0, "")
 	}
 

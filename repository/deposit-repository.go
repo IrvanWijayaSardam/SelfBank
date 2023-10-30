@@ -13,7 +13,7 @@ type DepositRepository interface {
 	InsertDeposit(brg *entity.Deposit) entity.Deposit
 	All(page int, pageSize int) ([]entity.Deposit, error)
 	UpdateDeposit(plg entity.Deposit) entity.Deposit
-	FindDepositByID(id string) *entity.Deposit
+	FindDepositByID(id string) entity.Deposit
 	FindDepositByIDUser(id uint64, page int, pageSize int) ([]entity.Deposit, error)
 	TotalDeposit() int64
 	TotalDepositByUserID(idUser uint64) int64
@@ -107,14 +107,14 @@ func (db *DepositConnection) UpdateDeposit(Deposit entity.Deposit) entity.Deposi
 	return Deposit
 }
 
-func (db *DepositConnection) FindDepositByID(id string) *entity.Deposit {
+func (db *DepositConnection) FindDepositByID(id string) entity.Deposit {
 	var Deposit entity.Deposit
 	result := db.connection.Where("id = ? ", id).Take(&Deposit)
 	if result.Error != nil || result.RowsAffected == 0 {
-		return nil
+		return Deposit
 	}
 
-	return &Deposit
+	return Deposit
 }
 
 func (db *DepositConnection) FindPaymentInfoById(id string) *entity.PaymentToken {

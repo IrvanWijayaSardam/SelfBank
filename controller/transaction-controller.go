@@ -97,6 +97,7 @@ func (c *transactionController) All(context echo.Context) error {
 
 	defaultPage := 1
 	defaultPageSize := 10
+	var transactionResponses []dto.TransactionResponse
 
 	page, err := strconv.Atoi(pageParam)
 	if err != nil || page < 1 {
@@ -135,6 +136,19 @@ func (c *transactionController) All(context echo.Context) error {
 			if err != nil {
 				response := helper.BuildErrorResponse("Failed to fetch data")
 				return context.JSON(http.StatusInternalServerError, response)
+			}
+
+			for _, transaction := range Transactions {
+				response := dto.TransactionResponse{
+					ID:                transaction.ID,
+					IDUser:            transaction.ID_User,
+					AccountNumberFrom: transaction.TransactionFrom,
+					AccountNumberTo:   transaction.TransactionTo,
+					Date:              helper.ConvertUnixtime(transaction.Date).Format("2006-01-02 15:04:05"),
+					Amount:            transaction.Amount,
+					Status:            transaction.Status,
+				}
+				transactionResponses = append(transactionResponses, response)
 			}
 
 			if exportTo == "pdf" {
@@ -187,6 +201,19 @@ func (c *transactionController) All(context echo.Context) error {
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
+			for _, transaction := range Transactions {
+				response := dto.TransactionResponse{
+					ID:                transaction.ID,
+					IDUser:            transaction.ID_User,
+					AccountNumberFrom: transaction.TransactionFrom,
+					AccountNumberTo:   transaction.TransactionTo,
+					Date:              helper.ConvertUnixtime(transaction.Date).Format("2006-01-02 15:04:05"),
+					Amount:            transaction.Amount,
+					Status:            transaction.Status,
+				}
+				transactionResponses = append(transactionResponses, response)
+			}
+
 			if exportTo == "pdf" {
 				pdfBuffer, err := c.TransactionService.GenerateTransactionPDF(Transactions)
 				if err != nil {
@@ -216,13 +243,13 @@ func (c *transactionController) All(context echo.Context) error {
 				Status  bool                      `json:"status"`
 				Message string                    `json:"message"`
 				Errors  interface{}               `json:"errors"`
-				Data    []entity.Transaction      `json:"data"`
+				Data    []dto.TransactionResponse `json:"data"`
 				Paging  helper.PaginationResponse `json:"paging"`
 			}{
 				Status:  true,
 				Message: "OK!",
 				Errors:  nil,
-				Data:    Transactions,
+				Data:    transactionResponses,
 				Paging:  helper.PaginationResponse{TotalRecords: int(total), CurrentPage: page, TotalPages: totalPages},
 			}
 
@@ -243,8 +270,24 @@ func (c *transactionController) FindTransactionByID(context echo.Context) error 
 		res := helper.BuildErrorResponse("Failed to parse order ID")
 		return context.JSON(http.StatusBadRequest, res)
 	}
-
 	Transaction := c.TransactionService.FindTransactionByID(orderIDUint)
-	response := helper.BuildResponse(true, "OK!", Transaction)
-	return context.JSON(http.StatusOK, response)
+
+	if Transaction.ID == 0 {
+		response := helper.BuildErrorResponse("Data Not Found !")
+		return context.JSON(http.StatusOK, response)
+	} else {
+		var transactionResponses = dto.TransactionResponse{
+			ID:                Transaction.ID,
+			IDUser:            Transaction.ID_User,
+			AccountNumberFrom: Transaction.TransactionFrom,
+			AccountNumberTo:   Transaction.TransactionTo,
+			Date:              helper.ConvertUnixtime(Transaction.Date).Format("2006-01-02 15:04:05"),
+			Amount:            Transaction.Amount,
+			Status:            Transaction.Status,
+		}
+
+		response := helper.BuildResponse(true, "OK!", transactionResponses)
+		return context.JSON(http.StatusOK, response)
+	}
+
 }

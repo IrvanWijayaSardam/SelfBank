@@ -249,7 +249,7 @@ func (c *depositController) All(context echo.Context) error {
 					Url_callback:    paymentInfo.CallbackUrl,
 					Amount:          deposit.Amount,
 					Status:          status,
-					Date:            deposit.Date,
+					Date:            helper.ConvertUnixtime(deposit.Date).Format("2006-01-02 15:04:05"),
 				}
 				depositResponses = append(depositResponses, depositResponse)
 			}
@@ -329,7 +329,7 @@ func (c *depositController) All(context echo.Context) error {
 					Url_callback:    paymentInfo.CallbackUrl,
 					Amount:          deposit.Amount,
 					Status:          status,
-					Date:            deposit.Date,
+					Date:            helper.ConvertUnixtime(deposit.Date).Format("2006-01-02 15:04:05"),
 				}
 				depositResponses = append(depositResponses, depositResponse)
 			}
@@ -442,36 +442,42 @@ func (c *depositController) FindDepositByID(context echo.Context) error {
 	id := context.Param("id")
 
 	Deposit := c.DepositService.FindDepositByID(id)
+	if Deposit.ID == "" {
+		response := helper.BuildErrorResponse("Data Not Found !")
+		return context.JSON(http.StatusOK, response)
+	} else {
+		status := ""
+		switch Deposit.Status {
+		case 1:
+			status = "Created"
+		case 2:
+			status = "Pending"
+		case 3:
+			status = "Cancelled"
+		case 4:
+			status = "Denied"
+		case 5:
+			status = "Paid"
+		default:
+			status = "Created"
+		}
 
-	status := ""
-	switch Deposit.Status {
-	case 1:
-		status = "Created"
-	case 2:
-		status = "Pending"
-	case 3:
-		status = "Cancelled"
-	case 4:
-		status = "Denied"
-	case 5:
-		status = "Paid"
-	default:
-		status = "Created"
+		paymentInfo := c.DepositService.FindPaymentInfoById(Deposit.ID)
+
+		depositResponse := dto.DepositResponse{
+			Id_deposit:      Deposit.ID,
+			Id_user:         Deposit.ID_User,
+			Virtual_account: paymentInfo.VirtualAcc,
+			Url_callback:    paymentInfo.CallbackUrl,
+			Amount:          Deposit.Amount,
+			Status:          status,
+			Date:            helper.ConvertUnixtime(Deposit.Date).Format("2006-01-02 15:04:05"),
+		}
+
+		response := helper.BuildResponse(true, "OK!", depositResponse)
+		return context.JSON(http.StatusOK, response)
 	}
 
-	paymentInfo := c.DepositService.FindPaymentInfoById(Deposit.ID)
-
-	depositResponse := dto.DepositResponse{
-		Id_deposit:      Deposit.ID,
-		Id_user:         Deposit.ID_User,
-		Virtual_account: paymentInfo.VirtualAcc,
-		Url_callback:    paymentInfo.CallbackUrl,
-		Amount:          Deposit.Amount,
-		Status:          status,
-	}
-
-	response := helper.BuildResponse(true, "OK!", depositResponse)
-	return context.JSON(http.StatusOK, response)
 }
 
 func (c *depositController) HandleMidtransNotification(ctx echo.Context) error {

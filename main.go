@@ -3,10 +3,12 @@ package main
 import (
 	"github.com/IrvanWijayaSardam/SelfBank/config"
 	"github.com/IrvanWijayaSardam/SelfBank/controller"
+	"github.com/IrvanWijayaSardam/SelfBank/helper"
 	"github.com/IrvanWijayaSardam/SelfBank/middleware"
 	"github.com/IrvanWijayaSardam/SelfBank/repository"
 	"github.com/IrvanWijayaSardam/SelfBank/routes"
 	"github.com/IrvanWijayaSardam/SelfBank/service"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"github.com/labstack/echo/v4"
@@ -48,5 +50,6 @@ func main() {
 	routes.TransactionRoutes(e, transactioNService, transactionController, jwtMiddleware)
 	routes.ImageRoutes(e, userController, jwtMiddleware)
 
+	logrus.Print(helper.GetCurrentTimeInLocation())
 	e.Start(":8000")
 }

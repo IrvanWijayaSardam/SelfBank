@@ -10,7 +10,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/IrvanWijayaSardam/SelfBank/dto"
-	"github.com/IrvanWijayaSardam/SelfBank/entity"
 	"github.com/IrvanWijayaSardam/SelfBank/helper"
 	"github.com/IrvanWijayaSardam/SelfBank/service"
 )
@@ -80,6 +79,7 @@ func (c *withdrawalController) Insert(context echo.Context) error {
 func (c *withdrawalController) All(context echo.Context) error {
 	pageParam := context.QueryParam("page")
 	pageSizeParam := context.QueryParam("pageSize")
+	var withdrawalResponse []dto.WithdrawalResponseDTO
 
 	defaultPage := 1
 	defaultPageSize := 10
@@ -123,19 +123,31 @@ func (c *withdrawalController) All(context echo.Context) error {
 				return context.JSON(http.StatusInternalServerError, response)
 			}
 
+			for _, transaction := range Withdrawals {
+				response := dto.WithdrawalResponseDTO{
+					ID:     transaction.ID,
+					IDUser: transaction.ID_User,
+					Date:   helper.ConvertUnixtime(transaction.Date).Format("2006-01-02 15:04:05"),
+					Amount: transaction.Amount,
+					Status: transaction.Status,
+					To:     transaction.To,
+				}
+				withdrawalResponse = append(withdrawalResponse, response)
+			}
+
 			total := c.WithdrawalService.TotalWithdrawal()
 
 			totalPages := (int(total) + pageSize - 1) / pageSize
 
 			customResponse := struct {
-				Status  bool                      `json:"status"`
-				Message string                    `json:"message"`
-				Data    []entity.Withdrawal       `json:"data"`
-				Paging  helper.PaginationResponse `json:"paging"`
+				Status  bool                        `json:"status"`
+				Message string                      `json:"message"`
+				Data    []dto.WithdrawalResponseDTO `json:"data"`
+				Paging  helper.PaginationResponse   `json:"paging"`
 			}{
 				Status:  true,
 				Message: "OK!",
-				Data:    Withdrawals,
+				Data:    withdrawalResponse,
 				Paging:  helper.PaginationResponse{TotalRecords: int(total), CurrentPage: page, TotalPages: totalPages},
 			}
 
@@ -150,20 +162,31 @@ func (c *withdrawalController) All(context echo.Context) error {
 				response := helper.BuildErrorResponse("Failed to fetch data")
 				return context.JSON(http.StatusInternalServerError, response)
 			}
+			for _, transaction := range Withdrawals {
+				response := dto.WithdrawalResponseDTO{
+					ID:     transaction.ID,
+					IDUser: transaction.ID_User,
+					Date:   helper.ConvertUnixtime(transaction.Date).Format("2006-01-02 15:04:05"),
+					Amount: transaction.Amount,
+					To:     transaction.To,
+					Status: transaction.Status,
+				}
+				withdrawalResponse = append(withdrawalResponse, response)
+			}
 
 			total := c.WithdrawalService.TotalWithdrawalByUserID(userIDCnv)
 
 			totalPages := (int(total) + pageSize - 1) / pageSize
 
 			customResponse := struct {
-				Status  bool                      `json:"status"`
-				Message string                    `json:"message"`
-				Data    []entity.Withdrawal       `json:"data"`
-				Paging  helper.PaginationResponse `json:"paging"`
+				Status  bool                        `json:"status"`
+				Message string                      `json:"message"`
+				Data    []dto.WithdrawalResponseDTO `json:"data"`
+				Paging  helper.PaginationResponse   `json:"paging"`
 			}{
 				Status:  true,
 				Message: "OK!",
-				Data:    Withdrawals,
+				Data:    withdrawalResponse,
 				Paging:  helper.PaginationResponse{TotalRecords: int(total), CurrentPage: page, TotalPages: totalPages},
 			}
 
