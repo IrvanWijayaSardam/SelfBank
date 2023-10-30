@@ -132,7 +132,7 @@ func (service *withdrawalService) UpdateWithdrawalStatus(orderID uint64, newStat
 }
 
 func (service *withdrawalService) GenerateWithdrawalPDF(Transactions []entity.Withdrawal) (*bytes.Buffer, error) {
-	pdf := gofpdf.New("L", "mm", "A2", "")
+	pdf := gofpdf.New("L", "mm", "A4", "")
 	pdf.AddPage()
 
 	pdf.SetFont("Arial", "B", 16)
