@@ -75,6 +75,12 @@ func ImageRoutes(e *echo.Echo, userController controller.UserController, jwtMidd
 
 }
 
+func ChatbotRoutes(e *echo.Echo, chatbotController controller.ChatbotController, jwtMiddleware echo.MiddlewareFunc) {
+	chatbotRoutes := e.Group("/api/chatbot")
+
+	chatbotRoutes.POST("/", chatbotController.Request)
+}
+
 func MidtransRoutes(e *echo.Echo, transactionService service.DepositService,
 	transactionController controller.DepositController, jwtMiddleware echo.MiddlewareFunc) {
 	authRoutes := e.Group("/api/midtrans/notifications")
