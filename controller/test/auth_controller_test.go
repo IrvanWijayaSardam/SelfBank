@@ -110,7 +110,6 @@ func TestAuthController_Register(t *testing.T) {
 		Telephone:    "6281340691423",
 		Jk:           "F",
 		Status:       1,
-		IdRole:       2,
 	}
 
 	var dataUser = entity.User{

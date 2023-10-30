@@ -14,5 +14,5 @@ type User struct {
 	Balance       string `gorm:"-" json:"balance,omitempty"`
 	AccountNumber uint64 `gorm:"type:varchar(255)" json:"acc_number"`
 	IdRole        uint64 `gorm:"type:bigint" json:"idrole"`
-	Status        uint64 `gorm:"type:int(100)" json:"status"`
+	Status        uint64 `gorm:"type:int(100);default:1" json:"status"`
 }
