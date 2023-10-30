@@ -9,6 +9,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set Time Zone for a Command
+        run: |
+          TZ="Asia/Jakarta" 
+        shell: bash
       -
         name: Checkout
         uses: actions/checkout@v3
