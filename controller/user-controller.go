@@ -68,9 +68,6 @@ func (c *userController) All(ctx echo.Context) error {
 		}
 		switch roleID {
 		case 1:
-			response := helper.BuildErrorResponse("Unauthorized")
-			return ctx.JSON(http.StatusUnauthorized, response)
-		case 2:
 			users, err := c.userService.All(page, pageSize)
 			if err != nil {
 				response := helper.BuildErrorResponse("Failed to fetch data")
@@ -78,6 +75,9 @@ func (c *userController) All(ctx echo.Context) error {
 			}
 			response := helper.BuildResponse(true, "OK!", users)
 			return ctx.JSON(http.StatusOK, response)
+		case 2:
+			response := helper.BuildErrorResponse("Unauthorized")
+			return ctx.JSON(http.StatusUnauthorized, response)
 		default:
 			response := helper.BuildErrorResponse("Unauthorized")
 			return ctx.JSON(http.StatusUnauthorized, response)
