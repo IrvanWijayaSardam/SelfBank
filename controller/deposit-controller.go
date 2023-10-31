@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/IrvanWijayaSardam/SelfBank/dto"
+	"github.com/IrvanWijayaSardam/SelfBank/entity"
 	"github.com/IrvanWijayaSardam/SelfBank/helper"
 	"github.com/IrvanWijayaSardam/SelfBank/service"
 
@@ -179,6 +180,30 @@ func (c *depositController) All(context echo.Context) error {
 	pageParam := context.QueryParam("page")
 	pageSizeParam := context.QueryParam("pageSize")
 	exportTo := context.QueryParam("exportTo")
+	startDateStr := context.QueryParam("startDate")
+	endDateStr := context.QueryParam("endDate")
+
+	var Deposits []entity.Deposit
+
+	var startDate, endDate int64
+	var total int64
+	var err error
+
+	if startDateStr != "" {
+		startDate, err = strconv.ParseInt(startDateStr, 10, 64)
+		if err != nil {
+			response := helper.BuildErrorResponse("Invalid startDate")
+			return context.JSON(http.StatusBadRequest, response)
+		}
+	}
+
+	if endDateStr != "" {
+		endDate, err = strconv.ParseInt(endDateStr, 10, 64)
+		if err != nil {
+			response := helper.BuildErrorResponse("Invalid End Date")
+			return context.JSON(http.StatusBadRequest, response)
+		}
+	}
 
 	defaultPage := 1
 	defaultPageSize := 10
@@ -215,10 +240,12 @@ func (c *depositController) All(context echo.Context) error {
 		}
 		switch roleID {
 		case 1:
-			Deposits, err := c.DepositService.All(page, pageSize)
-			if err != nil {
-				response := helper.BuildErrorResponse("Failed to fetch data")
-				return context.JSON(http.StatusInternalServerError, response)
+			if startDate != 0 && endDate != 0 {
+				Deposits, err = c.DepositService.SearchByDateAll(startDate, endDate)
+				total = c.DepositService.TotalDepositByDate(startDate, endDate)
+			} else {
+				Deposits, err = c.DepositService.All(page, pageSize)
+				total = c.DepositService.TotalDeposit()
 			}
 
 			var depositResponses []dto.DepositResponse
@@ -274,8 +301,6 @@ func (c *depositController) All(context echo.Context) error {
 				}
 			}
 
-			total := c.DepositService.TotalDeposit()
-
 			totalPages := (int(total) + pageSize - 1) / pageSize
 
 			customResponse := struct {
@@ -296,7 +321,14 @@ func (c *depositController) All(context echo.Context) error {
 			if err != nil {
 				fmt.Println("Conversion error:", err)
 			}
-			Deposits, err := c.DepositService.FindDepositByIDUser(userIDCnv, page, pageSize)
+			if startDate != 0 && endDate != 0 {
+				Deposits, err = c.DepositService.SearchByDateIDUser(userIDCnv, startDate, endDate)
+				total = c.DepositService.TotalDepositByDateIdUser(userIDCnv, startDate, endDate)
+			} else {
+				Deposits, err = c.DepositService.FindDepositByIDUser(userIDCnv, page, pageSize)
+				total = c.DepositService.TotalDeposit()
+			}
+
 			if err != nil {
 				response := helper.BuildErrorResponse("Failed to fetch data")
 				return context.JSON(http.StatusInternalServerError, response)

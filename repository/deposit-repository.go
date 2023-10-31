@@ -20,6 +20,10 @@ type DepositRepository interface {
 	StorePaymentToken(depositID string, paymentToken string, virtualAcc string, callbackUrl string) error
 	UpdateDepositStatus(id string, newStatus uint64) error
 	FindPaymentInfoById(id string) *entity.PaymentToken
+	SearchByDateAll(dateStart int64, dateEnd int64) ([]entity.Deposit, error)
+	SearchByDateIDUser(idUser uint64, dateStart int64, dateEnd int64) ([]entity.Deposit, error)
+	TotalDepositByDate(dateStart int64, dateEnd int64) int64
+	TotalDepositByDateIdUser(idUser uint64, dateStart int64, dateEnd int64) int64
 }
 
 type DepositConnection struct {
@@ -84,6 +88,58 @@ func (db *DepositConnection) All(page int, pageSize int) ([]entity.Deposit, erro
 	}
 
 	return transactions, nil
+}
+
+func (db *DepositConnection) SearchByDateAll(dateStart int64, dateEnd int64) ([]entity.Deposit, error) {
+	var deposits []entity.Deposit
+
+	condition := "date >= ? AND date <= ? AND status != ?"
+
+	result := db.connection.Where(condition, dateStart, dateEnd, 1).Find(&deposits)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return deposits, nil
+}
+
+func (db *DepositConnection) SearchByDateIDUser(idUser uint64, dateStart int64, dateEnd int64) ([]entity.Deposit, error) {
+	var deposits []entity.Deposit
+
+	condition := "id_user = ? AND date >= ? AND date <= ? AND status != ?"
+
+	result := db.connection.Where(condition, idUser, dateStart, dateEnd, 1).Find(&deposits)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return deposits, nil
+}
+
+func (db *DepositConnection) TotalDepositByDate(dateStart int64, dateEnd int64) int64 {
+	var count int64
+
+	condition := "date >= ? AND date <= ? AND status != ?"
+
+	result := db.connection.Model(&entity.Deposit{}).Where(condition, dateStart, dateEnd, 1).Count(&count)
+	if result.Error != nil {
+		return 0
+	}
+
+	return count
+}
+
+func (db *DepositConnection) TotalDepositByDateIdUser(idUser uint64, dateStart int64, dateEnd int64) int64 {
+	var count int64
+
+	condition := "id_user = ? AND date >= ? AND date <= ? AND status != ?"
+
+	result := db.connection.Model(&entity.Deposit{}).Where(condition, idUser, dateStart, dateEnd, 1).Count(&count)
+	if result.Error != nil {
+		return 0
+	}
+
+	return count
 }
 
 func (db *DepositConnection) FindDepositByIDUser(idUser uint64, page int, pageSize int) ([]entity.Deposit, error) {

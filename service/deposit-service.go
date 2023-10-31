@@ -34,6 +34,10 @@ type DepositService interface {
 	UpdateDepositStatus(orderID string, newStatus uint64) error
 	FindPaymentInfoById(depositId string) *entity.PaymentToken
 	GenerateDepositPDF(deposits []dto.DepositResponse) (*bytes.Buffer, error)
+	SearchByDateAll(dateStart int64, dateEnd int64) ([]entity.Deposit, error)
+	SearchByDateIDUser(idUser uint64, dateStart int64, dateEnd int64) ([]entity.Deposit, error)
+	TotalDepositByDate(dateStart int64, dateEnd int64) int64
+	TotalDepositByDateIdUser(idUser uint64, dateStart int64, dateEnd int64) int64
 }
 
 type depositService struct {
@@ -74,6 +78,14 @@ func (service *depositService) TotalDeposit() int64 {
 	return service.DepositRepository.TotalDeposit()
 }
 
+func (service *depositService) TotalDepositByDate(dateStart int64, dateEnd int64) int64 {
+	return service.DepositRepository.TotalDepositByDate(dateStart, dateEnd)
+}
+
+func (service *depositService) TotalDepositByDateIdUser(idUser uint64, dateStart int64, dateEnd int64) int64 {
+	return service.DepositRepository.TotalDepositByDateIdUser(idUser, dateStart, dateEnd)
+}
+
 func (service *depositService) TotalDepositByUserID(idUser uint64) int64 {
 	return service.DepositRepository.TotalDepositByUserID(idUser)
 }
@@ -84,6 +96,14 @@ func (service *depositService) All(page int, pageSize int) ([]entity.Deposit, er
 	}
 
 	return service.DepositRepository.All(page, pageSize)
+}
+
+func (service *depositService) SearchByDateAll(dateStart int64, dateEnd int64) ([]entity.Deposit, error) {
+	return service.DepositRepository.SearchByDateAll(dateStart, dateEnd)
+}
+
+func (service *depositService) SearchByDateIDUser(idUser uint64, dateStart int64, dateEnd int64) ([]entity.Deposit, error) {
+	return service.DepositRepository.SearchByDateIDUser(idUser, dateStart, dateEnd)
 }
 
 func (service *depositService) FindDepositByIDUser(idUser uint64, page int, pageSize int) ([]entity.Deposit, error) {
