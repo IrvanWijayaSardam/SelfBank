@@ -15,4 +15,5 @@ type User struct {
 	AccountNumber uint64 `gorm:"type:varchar(255)" json:"acc_number"`
 	IdRole        uint64 `gorm:"type:bigint" json:"idrole"`
 	Status        uint64 `gorm:"type:int(100);default:1" json:"status"`
+	IsVerified    bool   `gorm:"type:boolean" json:"is_verified`
 }

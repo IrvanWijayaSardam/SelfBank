@@ -88,3 +88,12 @@ func MidtransRoutes(e *echo.Echo, transactionService service.DepositService,
 	authRoutes.POST("/", transactionController.HandleMidtransNotification)
 
 }
+
+func VerificationRoutes(e *echo.Echo, verificatioNService service.VerificationService,
+	verificationController controller.VerificationController, jwtMiddleware echo.MiddlewareFunc) {
+	authRoutes := e.Group("/api/verification")
+
+	authRoutes.POST("/", verificationController.SendVerificationEmail)
+	authRoutes.POST("/validate", verificationController.ValidateVerification)
+
+}
