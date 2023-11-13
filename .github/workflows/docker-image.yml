@@ -41,12 +41,6 @@ jobs:
           echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> .env
           echo "CLOUDINARY_UPLOAD_FOLDER=${{ secrets.CLOUDINARY_UPLOAD_FOLDER }}" >> .env
           echo "OPEN_AI_KEY=${{ secrets.OPEN_AI_KEY }}" >> .env
-          echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> .env
-          echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> .env
-          echo "SMTP_MAIL=${{ secrets.SMTP_MAIL }}" >> .env
-          echo "SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}" >> .env
-          echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
-          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_USER: ${{ secrets.DB_USER }}
@@ -61,7 +55,12 @@ jobs:
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
           CLOUDINARY_UPLOAD_FOLDER: ${{ secrets.CLOUDINARY_UPLOAD_FOLDER }}
           OPEN_AI_KEY: ${{ secrets.OPEN_AI_KEY }}
-      -
+		  SMTP_HOST: ${{ secrets.SMTP_HOST }}
+		  SMTP_PORT: ${{ secrets.SMTP_PORT }}
+		  SMTP_MAIL: ${{ secrets.SMTP_MAIL }}
+		  SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+		  REDIS_HOST: ${{ secrets.REDIS_HOST }}
+		  REDIS_PORT: ${{ secrets.REDIS_PORT }}
         name: Build and push
         uses: docker/build-push-action@v4
         with:
@@ -78,7 +77,7 @@ jobs:
           key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            sudo docker stop ${{ secrets.CNAME }}
-            sudo docker rm ${{ secrets.CNAME }}
-            sudo docker rmi -f ${{ secrets.DOCKERHUB_USERNAME }}/imgselfbank
-                        docker run --name ${{ secrets.CNAME }} -p 8000:8000 -d -e DB_HOST=${{secrets.DB_HOST}} -e DB_USER=${{secrets.DB_USER}} -e DB_NAME=${{secrets.DB_NAME}} -e DB_PASS= -e JWT_SECRET=${{secrets.JWT_SECRET}} -e BASE_URL=${{secrets.BASE_URL}} -e MT_SERVER_KEY=${{secrets.MT_SERVER_KEY}} -e MT_CLIENT_KEY=${{secrets.MT_CLIENT_KEY}} -e CLOUDINARY_CLOUD_NAME=${{secrets.CLOUDINARY_CLOUD_NAME}} -e CLOUDINARY_API_KEY=${{secrets.CLOUDINARY_API_KEY}} -e CLOUDINARY_API_SECRET=${{secrets.CLOUDINARY_API_SECRET}} -e CLOUDINARY_UPLOAD_FOLDER=${{secrets.CLOUDINARY_UPLOAD_FOLDER}} -e OPEN_AI_KEY=${{secrets.OPEN_AI_KEY}} -e SMTP_HOST=${{secrets.SMTP_HOST}} -e SMTP_PORT=${{secrets.SMTP_PORT}} -e SMTP_MAIL=${{secrets.SMTP_MAIL}} -e SMTP_PASSWORD=${{secrets.SMTP_PASSWORD}} -e REDIS_HOST=${{secrets.REDIS_HOST}} -e REDIS_PORT=${{secrets.REDIS_PORT}}  ${{secrets.DOCKERHUB_USERNAME }}/imgselfbank
+            docker stop ${{ secrets.CNAME }}
+            docker rm ${{ secrets.CNAME }}
+            docker rmi -f ${{ secrets.DOCKERHUB_USERNAME }}/imgselfbank
+                        docker run --name ${{ secrets.CNAME }} -p 8000:8000 -d -e DB_HOST=${{secrets.DB_HOST}} -e DB_USER=${{secrets.DB_USER}} -e DB_NAME=${{secrets.DB_NAME}} -e DB_PASS= -e JWT_SECRET=${{secrets.JWT_SECRET}} -e BASE_URL=${{secrets.BASE_URL}} -e MT_SERVER_KEY=${{secrets.MT_SERVER_KEY}} -e MT_CLIENT_KEY=${{secrets.MT_CLIENT_KEY}} -e CLOUDINARY_CLOUD_NAME=${{secrets.CLOUDINARY_CLOUD_NAME}} -e CLOUDINARY_API_KEY=${{secrets.CLOUDINARY_API_KEY}} -e CLOUDINARY_API_SECRET=${{secrets.CLOUDINARY_API_SECRET}} -e CLOUDINARY_UPLOAD_FOLDER=${{secrets.CLOUDINARY_UPLOAD_FOLDER}} -e OPEN_AI_KEY=${{secrets.OPEN_AI_KEY}} -e SMTP_HOST=${{secrets.SMTP_HOST}} -e SMTP_PORT=${{secrets.SMTP_PORT}} -e SMTP_MAIL=${{secrets.SMTP_MAIL}} -e SMTP_PASSWORD=${{secrets.SMTP_PASSWORD}} -e REDIS_HOST=${{secrets.REDIS_HOST}} -e REDIS_PORT=${{secrets.REDIS_PORT}} ${{secrets.DOCKERHUB_USERNAME }}/imgselfbank
